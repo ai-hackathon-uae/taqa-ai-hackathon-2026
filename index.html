@@ -79,16 +79,16 @@
   .foot{margin-top:16px;text-align:center;font-size:12px;color:#8fb6c6}
 
   /* order on phone */
-  #cReg{order:1}#cTable{order:2}#cAgenda{order:3}#cInfo{order:4}#cSurvey{order:5}
+  #cReg{order:1}#cTable{order:2}#cAgenda{order:3}#cInfo{order:4}#cPhotos{order:5}#cSurvey{order:6}
 
   /* laptop and desktop */
   @media (min-width:900px){
     .wrap{max-width:1040px;padding-block:28px 56px}
     h1{font-size:38px}
     .tabs{max-width:560px}
-    .grid{grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto auto auto 1fr;gap:16px;align-items:start}
+    .grid{grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto auto auto auto 1fr;gap:16px;align-items:start}
     #cReg{grid-column:1;grid-row:1;order:0}#cTable{grid-column:1;grid-row:2;order:0}
-    #cInfo{grid-column:1;grid-row:3;order:0}#cSurvey{grid-column:1;grid-row:4;order:0}
+    #cInfo{grid-column:1;grid-row:3;order:0}#cPhotos{grid-column:1;grid-row:4;order:0}#cSurvey{grid-column:1;grid-row:5;order:0}
     #cAgenda{grid-column:2;grid-row:1 / -1;order:0;padding:22px 24px}
     .s{grid-template-columns:96px minmax(0,1fr);padding:14px 16px}
   }
@@ -106,6 +106,7 @@
     <div class="card" id="cReg">
       <h2>Register your attendance</h2>
       <select id="who" aria-label="Your name"><option value="">Select your name</option></select>
+      <div class="muted" id="lockMsg" style="margin-top:8px" hidden></div>
       <button class="btn off" id="register" type="button" disabled>Register attendance</button>
       <div class="muted" id="regMsg" role="status" style="margin-top:8px"></div>
     </div>
@@ -135,6 +136,14 @@
       <div class="row" style="margin-top:10px"><b>Venue</b> <span id="venue"></span></div>
     </div>
 
+    <div class="card" id="cPhotos">
+      <h2>Share your photos</h2>
+      <div class="muted">Took pictures during the event? Add them here.</div>
+      <button class="btn" id="photoBtn" type="button">Add photos</button>
+      <input id="photoInput" type="file" accept="image/*" multiple hidden>
+      <div class="muted" id="photoMsg" role="status" style="margin-top:8px"></div>
+    </div>
+
     <div class="card" id="cSurvey">
       <h2>Share your feedback</h2>
       <div class="muted" id="svT"></div>
@@ -155,6 +164,7 @@
 </div>
 
 <script src="config.js"></script>
+<script src="people.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -180,13 +190,31 @@ function pickDay(){
 let day = pickDay(), batch = nowMin() >= 12*60+30 ? 1 : 0;
 
 const people = CONFIG.people;
-$('who').innerHTML += people.map((p,i) => `<option value="${i}">${esc(p.n)}</option>`).join('');
+const groups = []; people.forEach(p => { const g = p.g || 'Participants'; if (groups.indexOf(g) < 0) groups.push(g); });
+$('who').innerHTML += groups.map(g => `<optgroup label="${esc(g)}">` + people.map((p,i) => (p.g || 'Participants') === g ? `<option value="${i}">${esc(p.n)}</option>` : '').join('') + '</optgroup>').join('');
 const saved = store.get('hk_who');
 if (saved !== null && people[saved]) $('who').value = saved;
+let pending = false;
+// Days where attendance can be marked. Add a day to openDays in config.js to unlock it.
+const openDays = Array.isArray(CONFIG.openDays) ? CONFIG.openDays : ['Day 1'];
+const isOpen = d => openDays.indexOf(d.label) >= 0;
+// One phone, one person: once someone registers, this phone stays on their name.
+const meName = store.get('hk_me');
+const meIdx = meName ? people.findIndex(p => p.n === meName) : -1;
+if (meIdx >= 0) {
+  $('who').value = meIdx; $('who').disabled = true;
+  $('lockMsg').hidden = false;
+  $('lockMsg').textContent = 'This phone is registered to ' + meName + '. If this is wrong, please ask the registration desk.';
+}
+function deviceId(){
+  let id = store.get('hk_dev');
+  if (!id) { id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); store.set('hk_dev', id); }
+  return id;
+}
 
 $('tabs').innerHTML = CONFIG.days.map((d,i) => `<button data-i="${i}">${esc(d.label)}</button>`).join('');
-$('tabs').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { day = +i; render(); } };
-$('who').onchange = () => { store.set('hk_who', $('who').value); render(); };
+$('tabs').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { day = +i; pending = false; $('regMsg').textContent = ''; render(); } };
+$('who').onchange = () => { store.set('hk_who', $('who').value); pending = false; $('regMsg').textContent = ''; render(); };
 $('batches').onclick = e => { const b = e.target.dataset.b; if (b !== undefined) { batch = +b; render(); } };
 
 function render(){
@@ -198,16 +226,20 @@ function render(){
 
   // register
   const reg = $('register');
+  const open = isOpen(d);
   const done = !!p && isReg(p.n, d.label);
-  reg.disabled = !p; reg.classList.toggle('off', !p); reg.classList.toggle('done', done);
-  reg.textContent = done ? 'You are marked present' : 'Register attendance';
+  reg.disabled = !p || !open; reg.classList.toggle('off', !p || !open); reg.classList.toggle('done', done);
+  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'You are marked present' : pending && p ? 'Confirm: I am ' + p.n : 'Register attendance';
 
   // table
   $('cTable').hidden = d.showTables === false;
+  if (!open) $('regMsg').textContent = 'Attendance for ' + d.label + ' opens on the morning of the day.';
   const t = p && p.t[day];
   $('table').innerHTML = !p ? '<span class="muted">Select your name above to see your table.</span>'
+    : !open ? '<span class="muted">Your table will appear here once attendance opens.</span>'
     : !done ? '<span class="muted">Register your attendance above to see your table.</span>'
-    : t ? `Please sit at table <b>${esc(t)}</b>`
+    : t ? `Please sit at table <b>${esc(t)}</b>${p.note ? '<div class="muted" style="margin-top:10px;white-space:pre-line">' + esc(p.note) + '</div>' : ''}`
+    : p.note ? `<span class="muted" style="white-space:pre-line">${esc(p.note)}</span>`
     : '<span class="muted">Your table for this day will be shared on the morning.</span>';
 
   // agenda header
@@ -263,7 +295,7 @@ function showModal(p, d){
   const t = p.t[day];
   $('mTitle').textContent = 'You have been marked present';
   $('mSub').textContent = p.n + ', ' + d.label;
-  $('mTable').innerHTML = d.showTables === false ? '' : t ? 'Your table<b>' + esc(t) + '</b>' : 'Your table will be shared on the morning.';
+  $('mTable').innerHTML = d.showTables === false ? '' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
@@ -272,8 +304,13 @@ $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = tru
 
 $('register').onclick = async () => {
   const p = people[$('who').value], d = CONFIG.days[day], msg = $('regMsg'), btn = $('register');
-  if (!p) return;
+  if (!p || !isOpen(d)) return;
   if (isReg(p.n, d.label)) { showModal(p, d); return; }
+  if (!pending && !store.get('hk_me')) {
+    pending = true; render();
+    msg.textContent = 'Please check this is your name. After you confirm, this phone cannot be used for anyone else.';
+    return;
+  }
   msg.textContent = ''; btn.disabled = true; btn.textContent = 'Recording...';
   try {
     if (live()) {
@@ -281,16 +318,65 @@ $('register').onclick = async () => {
         method: 'POST',
         headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
                    CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
-        body: JSON.stringify({ name: p.n, day: d.label })
+        body: JSON.stringify({ name: p.n, day: d.label, device_id: deviceId() })
       });
-      if (!r.ok && r.status !== 409) { let t = ''; try { t = (await r.text()).slice(0, 160); } catch(x){} throw new Error('HTTP ' + r.status + (t ? ' ' + t : '')); }
+      if (!r.ok) {
+        let t = ''; try { t = (await r.text()).slice(0, 200); } catch(x){}
+        if (r.status === 409 && t.indexOf('attendance_device_day') >= 0) {
+          pending = false; btn.disabled = false; btn.textContent = 'Register attendance';
+          msg.textContent = 'This phone has already been used to register someone else today. If this is a mistake, please ask the registration desk.';
+          return;
+        }
+        if (r.status !== 409) throw new Error('HTTP ' + r.status + (t ? ' ' + t : ''));
+      }
     }
+    store.set('hk_me', p.n); pending = false; $('who').disabled = true;
+    $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + p.n + '. If this is wrong, please ask the registration desk.';
     setReg(p.n, d.label); render(); showModal(p, d);
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Register attendance';
+    pending = false; btn.disabled = false; btn.textContent = 'Register attendance';
     msg.textContent = 'We could not record your attendance. Check your connection and try again, or ask the registration desk.';
     const small = document.createElement('div'); small.style.cssText = 'font-size:11px;opacity:.7;margin-top:6px;word-break:break-all'; small.textContent = 'Details: ' + (e && e.message ? e.message : e); msg.appendChild(small);
   }
+};
+// ---- photo upload ----
+$('cPhotos').hidden = CONFIG.photoUploads === false;
+$('photoBtn').onclick = () => $('photoInput').click();
+const slug = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'guest';
+async function shrink(file){
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const max = 2400, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.88));
+    if (blob && blob.size > 0) return { blob, type: 'image/jpeg', ext: 'jpg' };
+  } catch (e) {}
+  return { blob: file, type: file.type || 'image/jpeg', ext: (file.name.split('.').pop() || 'jpg').toLowerCase() };
+}
+$('photoInput').onchange = async e => {
+  const files = Array.from(e.target.files || []); if (!files.length) return;
+  const msg = $('photoMsg'), btn = $('photoBtn'), p = people[$('who').value], d = CONFIG.days[day];
+  btn.disabled = true; btn.classList.add('off'); let ok = 0, fail = 0, lastErr = '';
+  for (let i = 0; i < files.length; i++) {
+    msg.textContent = 'Uploading photo ' + (i + 1) + ' of ' + files.length + '...';
+    try {
+      const s = await shrink(files[i]);
+      if (live()) {
+        const path = slug(d.label) + '/' + slug(p ? p.n : 'guest') + '/' + Date.now() + '-' + i + '.' + s.ext;
+        const base = CONFIG.supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+        const r = await fetch(base + '/storage/v1/object/event-photos/' + path, { method: 'POST',
+          headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': s.type, 'x-upsert': 'false' },
+                     CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
+          body: s.blob });
+        if (!r.ok) { let t = ''; try { t = (await r.text()).slice(0, 160); } catch(x){} throw new Error('HTTP ' + r.status + (t ? ' ' + t : '')); }
+      }
+      ok++;
+    } catch (err) { fail++; lastErr = err && err.message ? err.message : String(err); }
+  }
+  btn.disabled = false; btn.classList.remove('off'); e.target.value = '';
+  msg.textContent = (ok ? ok + (ok === 1 ? ' photo' : ' photos') + ' uploaded. Thank you!' : '') + (!live() && ok ? ' (Test mode: not saved.)' : '') +
+    (fail ? (ok ? ' ' : '') + fail + ' could not be uploaded. Please try again. Details: ' + lastErr : '');
 };
 render();
 </script>
