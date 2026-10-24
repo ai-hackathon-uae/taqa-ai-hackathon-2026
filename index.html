@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAQA AI Hackathon 2026</title>
+<meta name="theme-color" content="#16162e">
+<style>
+  :root{color-scheme:dark;--navy:#16162e;--cyan:#029dc9;--sky:#7fd8f2;--ink:#d6eef7;
+        --glass:rgba(255,255,255,.09);--line:rgba(255,255,255,.22)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:#16162e}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#fff;min-height:100vh;
+       background:linear-gradient(160deg,#16162e 0%,#162641 50%,#0f5f86 82%,#029dc9 100%);background-attachment:fixed;
+       padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .wrap{width:100%;max-width:480px;margin:0 auto;padding-block:20px 40px}
+  .banner{display:block;width:100%;height:auto;border-radius:14px;margin-bottom:18px}
+  h1{font-size:30px;line-height:1.15;font-weight:800;text-wrap:balance}
+  .sub{font-size:14px;color:var(--ink);line-height:1.5;margin-top:4px}
+  .tabs{display:flex;gap:6px;margin:18px 0}
+  .tabs button{flex:1;min-width:0;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;
+       color:var(--ink);font:700 13px Arial,sans-serif;cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--navy);border-color:#fff}
+  .tabs button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+  .card{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px 18px;min-width:0}
+  .card h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sky);margin-bottom:10px}
+
+  select{width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff}
+  .btn{display:block;width:100%;text-align:center;text-decoration:none;color:#fff;background:var(--cyan);border:0;
+       border-radius:12px;padding:14px;font:800 16px Arial,sans-serif;margin-top:10px;cursor:pointer}
+  .btn.off{opacity:.45;pointer-events:none}
+  .btn.done{background:#1e9e6a}
+  .modal{position:fixed;inset:0;background:rgba(10,12,30,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal[hidden]{display:none}
+  .mbox{width:100%;max-width:380px;background:#fff;color:var(--navy);border-radius:20px;padding:26px 22px;text-align:center}
+  .mbox .tick{width:56px;height:56px;border-radius:50%;background:#1e9e6a;color:#fff;font-size:32px;line-height:56px;margin:0 auto 12px}
+  .mbox h3{font-size:22px;line-height:1.25}
+  .mbox p{font-size:15px;color:#4a4f63;margin-top:6px;line-height:1.5}
+  .mbox .big{display:inline-block;margin-top:14px;font-size:15px;color:#4a4f63}
+  .mbox .big b{display:block;font-size:46px;color:var(--navy);line-height:1.1}
+  .mbox .demo{font-size:12px;color:#a35a00;margin-top:10px}
+  .mbox button{margin-top:18px;width:100%;border:0;border-radius:12px;padding:13px;background:var(--cyan);color:#fff;font:800 16px Arial,sans-serif;cursor:pointer}
+  .table{font-size:15px;line-height:1.4}
+  .table b{display:inline-block;background:#fff;color:var(--navy);border-radius:10px;padding:2px 12px;font-size:22px;margin-left:4px}
+  .muted{font-size:14px;color:var(--ink);line-height:1.5}
+  ol{margin:6px 0 0 20px;font-size:14px;line-height:1.6;color:#eaf8fd}
+  .row{font-size:14px;line-height:1.7}
+  .row b{color:var(--sky)}
+  .pw{font-family:Consolas,monospace;background:rgba(0,0,0,.25);padding:1px 6px;border-radius:6px}
+
+  /* agenda */
+  .ag-head{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+  .ag-title{font-size:20px;font-weight:800;line-height:1.2;text-wrap:balance}
+  .ag-obj{font-size:14px;color:var(--ink);line-height:1.5}
+  .ag-obj b{color:var(--sky);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+  .ag-meta{font-size:13px;color:var(--ink);margin-top:2px}
+  .batches{display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap}
+  .batches button{flex:1 1 140px;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--ink);font:700 12px Arial,sans-serif;cursor:pointer}
+  .batches button.on{background:var(--sky);color:var(--navy);border-color:var(--sky)}
+  .tl{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .s{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid transparent}
+  .s .tm{font-size:13px;font-weight:800;line-height:1.3}
+  .s .tm span{display:block;font-weight:400;color:var(--ink);font-size:12px}
+  .s .tt{font-size:15px;font-weight:700;line-height:1.3}
+  .s .dd{font-size:13px;color:var(--ink);line-height:1.5;margin-top:3px}
+  .s .oo{font-size:12px;color:var(--sky);margin-top:5px;line-height:1.4}
+  .chip{display:inline-block;font-size:11px;font-weight:700;color:var(--navy);background:var(--sky);border-radius:20px;padding:2px 9px;margin:6px 4px 0 0}
+  .s.break{background:transparent;border:1px dashed rgba(255,255,255,.28);padding:8px 12px}
+  .s.break .tt{font-weight:400;font-size:14px;color:var(--ink)}
+  .s.break .dd{margin-top:1px}
+  .s.past{opacity:.5}
+  .s.now{background:rgba(2,157,201,.38);border-color:var(--sky)}
+  .tag{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.08em;background:var(--sky);color:var(--navy);border-radius:8px;padding:2px 6px;vertical-align:middle}
+  .fb{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;color:var(--navy);background:#fff;border-radius:20px;padding:5px 12px;text-decoration:none}
+  .callout{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(127,216,242,.14);border:1px solid rgba(127,216,242,.4);font-size:13px;line-height:1.5}
+  .callout b{color:var(--sky)}
+  .foot{margin-top:16px;text-align:center;font-size:12px;color:#8fb6c6}
+
+  /* order on phone */
+  #cReg{order:1}#cTable{order:2}#cAgenda{order:3}#cInfo{order:4}#cSurvey{order:5}
+
+  /* laptop and desktop */
+  @media (min-width:900px){
+    .wrap{max-width:1040px;padding-block:28px 56px}
+    h1{font-size:38px}
+    .tabs{max-width:560px}
+    .grid{grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto auto auto 1fr;gap:16px;align-items:start}
+    #cReg{grid-column:1;grid-row:1;order:0}#cTable{grid-column:1;grid-row:2;order:0}
+    #cInfo{grid-column:1;grid-row:3;order:0}#cSurvey{grid-column:1;grid-row:4;order:0}
+    #cAgenda{grid-column:2;grid-row:1 / -1;order:0;padding:22px 24px}
+    .s{grid-template-columns:96px minmax(0,1fr);padding:14px 16px}
+  }
+  @media (prefers-reduced-motion:no-preference){.s{transition:opacity .2s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="banner" src="banner.jpg" alt="TAQA AI Hackathon">
+  <h1 id="welcome">Welcome</h1>
+  <p class="sub" id="daysub"></p>
+  <div class="tabs" id="tabs"></div>
+
+  <div class="grid">
+    <div class="card" id="cReg">
+      <h2>Register your attendance</h2>
+      <select id="who" aria-label="Your name"><option value="">Select your name</option></select>
+      <button class="btn off" id="register" type="button" disabled>Register attendance</button>
+      <div class="muted" id="regMsg" role="status" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card" id="cTable">
+      <h2>Your table</h2>
+      <div class="table" id="table"></div>
+    </div>
+
+    <div class="card" id="cAgenda">
+      <h2>Agenda</h2>
+      <div class="ag-head">
+        <div class="ag-title" id="agT"></div>
+        <div class="ag-obj" id="agO"></div>
+        <div class="ag-meta" id="agM"></div>
+      </div>
+      <div class="batches" id="batches"></div>
+      <ul class="tl" id="tl"></ul>
+      <div class="callout" id="note" hidden></div>
+      <p class="foot" id="foot"></p>
+    </div>
+
+    <div class="card" id="cInfo">
+      <h2>Helpful details</h2>
+      <div class="row"><b>Prayer room</b><ol id="prayer"></ol></div>
+      <div class="row" style="margin-top:10px"><b>Wi-Fi</b> <span id="wifi"></span></div>
+      <div class="row" style="margin-top:10px"><b>Venue</b> <span id="venue"></span></div>
+    </div>
+
+    <div class="card" id="cSurvey">
+      <h2>Share your feedback</h2>
+      <div class="muted" id="svT"></div>
+      <a class="btn" id="survey" href="#" target="_blank" rel="noopener">Give feedback</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="mbox">
+    <div class="tick">&#10003;</div>
+    <h3 id="mTitle"></h3>
+    <p id="mSub"></p>
+    <div class="big" id="mTable"></div>
+    <div class="demo" id="mDemo" hidden>Test mode: this check-in was not saved.</div>
+    <button type="button" id="mClose">Done</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+const ABU = { timeZone: 'Asia/Dubai' };
+const todayStr = () => new Intl.DateTimeFormat('en-CA', ABU).format(new Date());
+const nowMin = () => { const p = new Intl.DateTimeFormat('en-GB', {...ABU, hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).formatToParts(new Date());
+  return +p.find(x=>x.type==='hour').value*60 + +p.find(x=>x.type==='minute').value; };
+const mins = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const fmt = t => { let [h,m] = t.split(':').map(Number); const ap = h>=12?'PM':'AM'; h = h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; };
+
+function pickDay(){
+  const q = parseInt(new URLSearchParams(location.search).get('day'), 10);
+  if (q >= 1 && q <= CONFIG.days.length) return q-1;
+  const t = todayStr(), i = CONFIG.days.findIndex(d => d.date === t);
+  if (i >= 0) return i;
+  const next = CONFIG.days.findIndex(d => d.date > t);
+  return next >= 0 ? next : CONFIG.days.length-1;
+}
+let day = pickDay(), batch = nowMin() >= 12*60+30 ? 1 : 0;
+
+const people = CONFIG.people;
+$('who').innerHTML += people.map((p,i) => `<option value="${i}">${esc(p.n)}</option>`).join('');
+const saved = store.get('hk_who');
+if (saved !== null && people[saved]) $('who').value = saved;
+
+$('tabs').innerHTML = CONFIG.days.map((d,i) => `<button data-i="${i}">${esc(d.label)}</button>`).join('');
+$('tabs').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { day = +i; render(); } };
+$('who').onchange = () => { store.set('hk_who', $('who').value); render(); };
+$('batches').onclick = e => { const b = e.target.dataset.b; if (b !== undefined) { batch = +b; render(); } };
+
+function render(){
+  const d = CONFIG.days[day], p = people[$('who').value];
+  const isToday = d.date === todayStr();
+  document.querySelectorAll('#tabs button').forEach((b,i) => b.classList.toggle('on', i === day));
+  $('welcome').textContent = 'Welcome to ' + d.label;
+  $('daysub').textContent = d.title;
+
+  // register
+  const reg = $('register');
+  const done = !!p && isReg(p.n, d.label);
+  reg.disabled = !p; reg.classList.toggle('off', !p); reg.classList.toggle('done', done);
+  reg.textContent = done ? 'You are marked present' : 'Register attendance';
+
+  // table
+  $('cTable').hidden = d.showTables === false;
+  const t = p && p.t[day];
+  $('table').innerHTML = !p ? '<span class="muted">Select your name above to see your table.</span>'
+    : !done ? '<span class="muted">Register your attendance above to see your table.</span>'
+    : t ? `Please sit at table <b>${esc(t)}</b>`
+    : '<span class="muted">Your table for this day will be shared on the morning.</span>';
+
+  // agenda header
+  $('agT').textContent = d.label + ': ' + d.title;
+  $('agO').innerHTML = d.objective ? `<b>Objective</b>${esc(d.objective)}` : '';
+  const date = new Date(d.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', timeZone:'UTC' });
+  $('agM').textContent = date + '  |  ' + d.venue;
+
+  // batches (Day 5)
+  const hasB = !!d.batchLabels;
+  $('batches').hidden = !hasB;
+  $('batches').innerHTML = hasB ? d.batchLabels.map((l,i) => `<button data-b="${i}" class="${i===batch?'on':''}">${esc(l)}</button>`).join('') : '';
+
+  // timeline
+  const nm = nowMin();
+  $('tl').innerHTML = d.sessions.map(s => {
+    const [a,b] = hasB ? s.batches[batch] : [s.start, s.end];
+    const live = isToday && nm >= mins(a) && nm < mins(b);
+    const past = isToday && nm >= mins(b);
+    const cls = ['s', s.type || '', live ? 'now' : '', past ? 'past' : ''].join(' ');
+    const fb = /feedback/i.test(s.title) && CONFIG.surveyLink ? `<br><a class="fb" href="${esc(CONFIG.surveyLink)}" target="_blank" rel="noopener">Give feedback</a>` : '';
+    return `<li class="${cls}"><div class="tm">${fmt(a)}<span>to ${fmt(b)}</span></div><div>
+      <div class="tt">${esc(s.title)}${live ? '<span class="tag">NOW</span>' : ''}</div>
+      ${s.detail ? `<div class="dd">${esc(s.detail)}</div>` : ''}
+      ${s.owner ? `<div class="oo">${esc(s.owner)}</div>` : ''}
+      ${fb}</div></li>`;
+  }).join('');
+
+  const n = $('note');
+  n.hidden = !d.note;
+  if (d.note) { const [h, ...r] = d.note.split(': '); n.innerHTML = r.length ? `<b>${esc(h)}.</b> ${esc(r.join(': '))}` : esc(d.note); }
+  $('foot').textContent = CONFIG.footnote || '';
+
+  // details
+  $('prayer').innerHTML = CONFIG.prayerRoom.map(s => `<li>${esc(s)}</li>`).join('');
+  const w = CONFIG.wifi;
+  $('wifi').innerHTML = w.network ? `${esc(w.network)}${w.password ? ' &nbsp;Password: <span class="pw">' + esc(w.password) + '</span>' : ''}` : 'Details will be shared on the morning.';
+  $('venue').textContent = d.venue;
+
+  // survey
+  const sv = $('survey');
+  if (CONFIG.surveyLink) { sv.href = CONFIG.surveyLink; sv.classList.remove('off'); sv.textContent = 'Give feedback'; $('svT').textContent = 'Two minutes, and it helps us a lot.'; }
+  else { sv.href = '#'; sv.classList.add('off'); sv.textContent = 'Survey link coming soon'; $('svT').textContent = 'The feedback survey will open here later in the day.'; }
+}
+
+// ---- attendance ----
+const regKey = (n, dl) => n + '|' + dl;
+function isReg(n, dl){ try { return !!JSON.parse(store.get('hk_reg') || '{}')[regKey(n, dl)]; } catch(e){ return false; } }
+function setReg(n, dl){ let o = {}; try { o = JSON.parse(store.get('hk_reg') || '{}'); } catch(e){} o[regKey(n, dl)] = 1; store.set('hk_reg', JSON.stringify(o)); }
+const live = () => CONFIG.supabaseUrl && CONFIG.supabaseKey;
+
+function showModal(p, d){
+  const t = p.t[day];
+  $('mTitle').textContent = 'You have been marked present';
+  $('mSub').textContent = p.n + ', ' + d.label;
+  $('mTable').innerHTML = d.showTables === false ? '' : t ? 'Your table<b>' + esc(t) + '</b>' : 'Your table will be shared on the morning.';
+  $('mDemo').hidden = !!live();
+  $('modal').hidden = false; $('mClose').focus();
+}
+$('mClose').onclick = () => { $('modal').hidden = true; };
+$('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
+
+$('register').onclick = async () => {
+  const p = people[$('who').value], d = CONFIG.days[day], msg = $('regMsg'), btn = $('register');
+  if (!p) return;
+  if (isReg(p.n, d.label)) { showModal(p, d); return; }
+  msg.textContent = ''; btn.disabled = true; btn.textContent = 'Recording...';
+  try {
+    if (live()) {
+      const r = await fetch(CONFIG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/attendance?on_conflict=name,day', {
+        method: 'POST',
+        headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
+                   CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
+        body: JSON.stringify({ name: p.n, day: d.label })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }
+    setReg(p.n, d.label); render(); showModal(p, d);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Register attendance';
+    msg.textContent = 'We could not record your attendance. Check your connection and try again, or ask the registration desk.';
+  }
+};
+render();
+</script>
+</body>
+</html>
