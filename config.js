@@ -14,7 +14,7 @@ const CONFIG = {
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],
-  wifi: { network: "", password: "" },   // leave empty until you have them
+  wifi: { network: "Rotana Hotels", password: "" },   // leave empty until you have them
 
   footnote: "Timings may shift to accommodate changes in the agenda.",
 
