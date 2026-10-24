@@ -277,18 +277,19 @@ $('register').onclick = async () => {
   msg.textContent = ''; btn.disabled = true; btn.textContent = 'Recording...';
   try {
     if (live()) {
-      const r = await fetch(CONFIG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/attendance?on_conflict=name,day', {
+      const r = await fetch(CONFIG.supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '') + '/rest/v1/attendance?on_conflict=name,day', {
         method: 'POST',
         headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
                    CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
         body: JSON.stringify({ name: p.n, day: d.label })
       });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) { let t = ''; try { t = (await r.text()).slice(0, 160); } catch(x){} throw new Error('HTTP ' + r.status + (t ? ' ' + t : '')); }
     }
     setReg(p.n, d.label); render(); showModal(p, d);
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Register attendance';
     msg.textContent = 'We could not record your attendance. Check your connection and try again, or ask the registration desk.';
+    const small = document.createElement('div'); small.style.cssText = 'font-size:11px;opacity:.7;margin-top:6px;word-break:break-all'; small.textContent = 'Details: ' + (e && e.message ? e.message : e); msg.appendChild(small);
   }
 };
 render();
