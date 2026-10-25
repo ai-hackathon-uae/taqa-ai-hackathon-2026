@@ -106,6 +106,7 @@
     <div class="card" id="cReg">
       <h2>Register your attendance</h2>
       <select id="who" aria-label="Your name"><option value="">Select your name</option></select>
+      <div id="otherBox" hidden style="margin-top:10px;display:none;flex-direction:column;gap:8px"><input id="otherName" type="text" placeholder="Your full name" autocomplete="name" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"><input id="otherOrg" type="text" placeholder="Organisation (optional)" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"></div>
       <div class="muted" id="lockMsg" style="margin-top:8px" hidden></div>
       <button class="btn off" id="register" type="button" disabled>Register attendance</button>
       <div class="muted" id="regMsg" role="status" style="margin-top:8px"></div>
@@ -191,9 +192,12 @@ let day = pickDay(), batch = nowMin() >= 12*60+30 ? 1 : 0;
 
 const people = CONFIG.people;
 const groups = []; people.forEach(p => { const g = p.g || 'Participants'; if (groups.indexOf(g) < 0) groups.push(g); });
-$('who').innerHTML += groups.map(g => `<optgroup label="${esc(g)}">` + people.map((p,i) => (p.g || 'Participants') === g ? `<option value="${i}">${esc(p.n)}</option>` : '').join('') + '</optgroup>').join('');
+$('who').innerHTML += groups.map(g => `<optgroup label="${esc(g)}">` + people.map((p,i) => (p.g || 'Participants') === g ? `<option value="${i}">${esc(p.n)}</option>` : '').join('') + '</optgroup>').join('') + '<option value="other">My name is not on the list</option>';
+function cur(){ const v = $('who').value; if (v === 'other') { const nm = $('otherName').value.trim().replace(/\s+/g,' '), og = $('otherOrg').value.trim(); return nm ? { n: nm + (og ? ' (' + og + ')' : '') + ' [not on list]', label: nm, org: og, t: ['','','',''], notable: true, guest: true } : null; } return people[v]; }
+function showOther(){ const o = $('who').value === 'other'; $('otherBox').hidden = !o; $('otherBox').style.display = o ? 'flex' : 'none'; }
 const saved = store.get('hk_who');
-if (saved !== null && people[saved]) $('who').value = saved;
+if (saved !== null && (people[saved] || saved === 'other')) $('who').value = saved;
+showOther();
 let pending = false;
 // Days where attendance can be marked. Add a day to openDays in config.js to unlock it.
 const openDays = Array.isArray(CONFIG.openDays) ? CONFIG.openDays : ['Day 1'];
@@ -206,6 +210,7 @@ if (meIdx >= 0) {
   $('lockMsg').hidden = false;
   $('lockMsg').textContent = 'This phone is registered to ' + meName + '. If this is wrong, please ask the registration desk.';
 }
+if (meName && meIdx < 0) { try { const o = JSON.parse(store.get('hk_meo') || 'null'); if (o && o.name) { $('who').value = 'other'; $('otherName').value = o.name; $('otherOrg').value = o.org || ''; showOther(); $('who').disabled = true; $('otherName').disabled = true; $('otherOrg').disabled = true; $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + o.name + '. If this is wrong, please ask the registration desk.'; } } catch(e){} }
 function deviceId(){
   let id = store.get('hk_dev');
   if (!id) { id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); store.set('hk_dev', id); }
@@ -214,11 +219,12 @@ function deviceId(){
 
 $('tabs').innerHTML = CONFIG.days.map((d,i) => `<button data-i="${i}">${esc(d.label)}</button>`).join('');
 $('tabs').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { day = +i; pending = false; $('regMsg').textContent = ''; render(); } };
-$('who').onchange = () => { store.set('hk_who', $('who').value); pending = false; $('regMsg').textContent = ''; render(); };
+$('otherName').oninput = $('otherOrg').oninput = () => { pending = false; $('regMsg').textContent = ''; render(); };
+$('who').onchange = () => { store.set('hk_who', $('who').value); showOther(); pending = false; $('regMsg').textContent = ''; render(); };
 $('batches').onclick = e => { const b = e.target.dataset.b; if (b !== undefined) { batch = +b; render(); } };
 
 function render(){
-  const d = CONFIG.days[day], p = people[$('who').value];
+  const d = CONFIG.days[day], p = cur();
   const isToday = d.date === todayStr();
   document.querySelectorAll('#tabs button').forEach((b,i) => b.classList.toggle('on', i === day));
   $('welcome').textContent = 'Welcome to ' + d.label;
@@ -229,7 +235,7 @@ function render(){
   const open = isOpen(d);
   const done = !!p && isReg(p.n, d.label);
   reg.disabled = !p || !open; reg.classList.toggle('off', !p || !open); reg.classList.toggle('done', done);
-  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'You are marked present' : pending && p ? 'Confirm: I am ' + p.n : 'Register attendance';
+  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'You are marked present' : pending && p ? 'Confirm: I am ' + (p.label || p.n) : 'Register attendance';
 
   // table
   $('cTable').hidden = d.showTables === false;
@@ -238,6 +244,7 @@ function render(){
   $('table').innerHTML = !p ? '<span class="muted">Select your name above to see your table.</span>'
     : !open ? '<span class="muted">Your table will appear here once attendance opens.</span>'
     : !done ? '<span class="muted">Register your attendance above to see your table.</span>'
+    : p.notable ? '<span class="muted">You do not have an assigned table. Please sit wherever is free.</span>'
     : t ? `Please sit at table <b>${esc(t)}</b>${p.note ? '<div class="muted" style="margin-top:10px;white-space:pre-line">' + esc(p.note) + '</div>' : ''}`
     : p.note ? `<span class="muted" style="white-space:pre-line">${esc(p.note)}</span>`
     : '<span class="muted">Your table for this day will be shared on the morning.</span>';
@@ -294,8 +301,8 @@ const live = () => CONFIG.supabaseUrl && CONFIG.supabaseKey;
 function showModal(p, d){
   const t = p.t[day];
   $('mTitle').textContent = 'You have been marked present';
-  $('mSub').textContent = p.n + ', ' + d.label;
-  $('mTable').innerHTML = d.showTables === false ? '' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
+  $('mSub').textContent = (p.label || p.n) + ', ' + d.label;
+  $('mTable').innerHTML = d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
@@ -303,7 +310,7 @@ $('mClose').onclick = () => { $('modal').hidden = true; };
 $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
 
 $('register').onclick = async () => {
-  const p = people[$('who').value], d = CONFIG.days[day], msg = $('regMsg'), btn = $('register');
+  const p = cur(), d = CONFIG.days[day], msg = $('regMsg'), btn = $('register');
   if (!p || !isOpen(d)) return;
   if (isReg(p.n, d.label)) { showModal(p, d); return; }
   if (!pending && !store.get('hk_me')) {
@@ -330,8 +337,8 @@ $('register').onclick = async () => {
         if (r.status !== 409) throw new Error('HTTP ' + r.status + (t ? ' ' + t : ''));
       }
     }
-    store.set('hk_me', p.n); pending = false; $('who').disabled = true;
-    $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + p.n + '. If this is wrong, please ask the registration desk.';
+    store.set('hk_me', p.n); if (p.guest) { store.set('hk_meo', JSON.stringify({ name: p.label, org: p.org })); $('otherName').disabled = true; $('otherOrg').disabled = true; } pending = false; $('who').disabled = true;
+    $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + (p.label || p.n) + '. If this is wrong, please ask the registration desk.';
     setReg(p.n, d.label); render(); showModal(p, d);
   } catch (e) {
     pending = false; btn.disabled = false; btn.textContent = 'Register attendance';
@@ -356,7 +363,7 @@ async function shrink(file){
 }
 $('photoInput').onchange = async e => {
   const files = Array.from(e.target.files || []); if (!files.length) return;
-  const msg = $('photoMsg'), btn = $('photoBtn'), p = people[$('who').value], d = CONFIG.days[day];
+  const msg = $('photoMsg'), btn = $('photoBtn'), p = cur(), d = CONFIG.days[day];
   btn.disabled = true; btn.classList.add('off'); let ok = 0, fail = 0, lastErr = '';
   for (let i = 0; i < files.length; i++) {
     msg.textContent = 'Uploading photo ' + (i + 1) + ' of ' + files.length + '...';

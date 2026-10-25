@@ -82,4 +82,9 @@ CONFIG.people = [
   { n: "Mohammad Maaz Khan", t: ["", "", "", ""], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 3: Automated M&V\nTable 4: Smart Connect AI\nTable 9: Asset Data Reconciliation" },
   { n: "Mohammad Yousaf", t: ["", "", "", ""], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 6: AI Emergency Restoration Adviser\nTable 7: Smart Isolation Adviser\nTable 9: Gas Turbine Trip Early Warning" },
   { n: "Tanvir Ahmed", t: ["", "", "", ""], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 6: Safety and Fault Copilot\nTable 8: Snap2Sign\nTable 10: Water Submission Assurance Gateway" },
+  { n: "Manasi Sarin", t: ["", "", "", ""], g: "GELLIFY", notable: true },
+  { n: "Mohsin", t: ["", "", "", ""], g: "GELLIFY", notable: true },
+  { n: "Neil", t: ["", "", "", ""], g: "GELLIFY", notable: true },
+  { n: "Enrique", t: ["", "", "", ""], g: "GELLIFY", notable: true },
+  { n: "Qais", t: ["", "", "", ""], g: "TAQA Innovation", notable: true },
 ];
