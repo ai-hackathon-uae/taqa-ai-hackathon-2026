@@ -104,7 +104,7 @@
 
   <div class="grid">
     <div class="card" id="cReg">
-      <h2>Register your attendance</h2>
+      <h2>Morning attendance</h2>
       <select id="who" aria-label="Your name"><option value="">Select your name</option></select>
       <div id="otherBox" hidden style="margin-top:10px;display:none;flex-direction:column;gap:8px"><input id="otherName" type="text" placeholder="Your full name" autocomplete="name" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"><input id="otherOrg" type="text" placeholder="Organisation (optional)" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"></div>
       <div class="muted" id="lockMsg" style="margin-top:8px" hidden></div>
@@ -113,8 +113,14 @@
     </div>
 
     <div class="card" id="cTable">
-      <h2>Your table</h2>
+      <h2 id="tblH">Your table</h2>
       <div class="table" id="table"></div>
+      <div id="pmBox" style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)">
+        <h2>Check out</h2>
+        <div class="muted" id="pmNote">Please check out when you leave for the day.</div>
+        <button class="btn off" id="registerPm" type="button" disabled>Check out</button>
+        <div class="muted" id="pmMsg" role="status" style="margin-top:8px"></div>
+      </div>
     </div>
 
     <div class="card" id="cAgenda">
@@ -199,6 +205,7 @@ const saved = store.get('hk_who');
 if (saved !== null && (people[saved] || saved === 'other')) $('who').value = saved;
 showOther();
 let pending = false;
+const sessLabel = (d, k) => k === 'pm' ? d.label + ' check out' : d.label;
 // Days where attendance can be marked. Add a day to openDays in config.js to unlock it.
 const openDays = Array.isArray(CONFIG.openDays) ? CONFIG.openDays : ['Day 1'];
 const isOpen = d => openDays.indexOf(d.label) >= 0;
@@ -228,17 +235,24 @@ function render(){
   const isToday = d.date === todayStr();
   document.querySelectorAll('#tabs button').forEach((b,i) => b.classList.toggle('on', i === day));
   $('welcome').textContent = 'Welcome to ' + d.label;
-  $('daysub').textContent = d.title;
+  const tbd = (Array.isArray(CONFIG.tbdDays) ? CONFIG.tbdDays : ['Day 4']).indexOf(d.label) >= 0;
+  $('daysub').textContent = tbd ? 'Agenda to be confirmed' : d.title;
 
   // register
   const reg = $('register');
   const open = isOpen(d);
-  const done = !!p && isReg(p.n, d.label);
+  const done = !!p && isReg(p.n, sessLabel(d,'am'));
   reg.disabled = !p || !open; reg.classList.toggle('off', !p || !open); reg.classList.toggle('done', done);
-  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'You are marked present' : pending && p ? 'Confirm: I am ' + (p.label || p.n) : 'Register attendance';
+  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'Morning attendance recorded' : pending === 'am' && p ? 'Confirm: I am ' + (p.label || p.n) : 'Morning attendance';
+  // afternoon
+  const pm = $('registerPm'), pmFrom = CONFIG.afternoonFrom === undefined ? '12:30' : CONFIG.afternoonFrom;
+  const pmTime = !pmFrom || !isToday || nowMin() >= mins(pmFrom);
+  const pmOk = open && pmTime, pmDone = !!p && isReg(p.n, sessLabel(d,'pm'));
+  pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
+  pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
 
   // table
-  $('cTable').hidden = d.showTables === false;
+  $('tblH').hidden = $('table').hidden = d.showTables === false;
   if (!open) $('regMsg').textContent = 'Attendance for ' + d.label + ' opens on the morning of the day.';
   const t = p && p.t[day];
   $('table').innerHTML = !p ? '<span class="muted">Select your name above to see your table.</span>'
@@ -250,19 +264,20 @@ function render(){
     : '<span class="muted">Your table for this day will be shared on the morning.</span>';
 
   // agenda header
-  $('agT').textContent = d.label + ': ' + d.title;
-  $('agO').innerHTML = d.objective ? `<b>Objective</b>${esc(d.objective)}` : '';
+  $('agT').textContent = d.label + ': ' + (tbd ? 'TBD' : d.title);
+  $('agO').innerHTML = !tbd && d.objective ? `<b>Objective</b>${esc(d.objective)}` : '';
   const date = new Date(d.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', timeZone:'UTC' });
   $('agM').textContent = date + '  |  ' + d.venue;
 
   // batches (Day 5)
-  const hasB = !!d.batchLabels;
+  const hasB = !tbd && !!d.batchLabels;
   $('batches').hidden = !hasB;
   $('batches').innerHTML = hasB ? d.batchLabels.map((l,i) => `<button data-b="${i}" class="${i===batch?'on':''}">${esc(l)}</button>`).join('') : '';
 
   // timeline
   const nm = nowMin();
-  $('tl').innerHTML = d.sessions.map(s => {
+  if (tbd) $('tl').innerHTML = '<li class="s"><div class="tm">TBD</div><div><div class="tt">Agenda to be confirmed</div><div class="dd">We will share the agenda for this day soon.</div></div></li>';
+  else $('tl').innerHTML = d.sessions.map(s => {
     const [a,b] = hasB ? s.batches[batch] : [s.start, s.end];
     const live = isToday && nm >= mins(a) && nm < mins(b);
     const past = isToday && nm >= mins(b);
@@ -276,8 +291,8 @@ function render(){
   }).join('');
 
   const n = $('note');
-  n.hidden = !d.note;
-  if (d.note) { const [h, ...r] = d.note.split(': '); n.innerHTML = r.length ? `<b>${esc(h)}.</b> ${esc(r.join(': '))}` : esc(d.note); }
+  n.hidden = tbd || !d.note;
+  if (!tbd && d.note) { const [h, ...r] = d.note.split(': '); n.innerHTML = r.length ? `<b>${esc(h)}.</b> ${esc(r.join(': '))}` : esc(d.note); }
   $('foot').textContent = CONFIG.footnote || '';
 
   // details
@@ -298,23 +313,23 @@ function isReg(n, dl){ try { return !!JSON.parse(store.get('hk_reg') || '{}')[re
 function setReg(n, dl){ let o = {}; try { o = JSON.parse(store.get('hk_reg') || '{}'); } catch(e){} o[regKey(n, dl)] = 1; store.set('hk_reg', JSON.stringify(o)); }
 const live = () => CONFIG.supabaseUrl && CONFIG.supabaseKey;
 
-function showModal(p, d){
+function showModal(p, d, kind){
   const t = p.t[day];
-  $('mTitle').textContent = 'You have been marked present';
-  $('mSub').textContent = (p.label || p.n) + ', ' + d.label;
-  $('mTable').innerHTML = d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
+  $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
+  $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
+  $('mTable').innerHTML = kind === 'pm' ? '' : d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
 $('mClose').onclick = () => { $('modal').hidden = true; };
 $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
 
-$('register').onclick = async () => {
-  const p = cur(), d = CONFIG.days[day], msg = $('regMsg'), btn = $('register');
+async function doRegister(kind){
+  const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : 'Morning attendance';
   if (!p || !isOpen(d)) return;
-  if (isReg(p.n, d.label)) { showModal(p, d); return; }
-  if (!pending && !store.get('hk_me')) {
-    pending = true; render();
+  if (isReg(p.n, lab)) { showModal(p, d, kind); return; }
+  if (pending !== kind && !store.get('hk_me')) {
+    pending = kind; render();
     msg.textContent = 'Please check this is your name. After you confirm, this phone cannot be used for anyone else.';
     return;
   }
@@ -325,12 +340,12 @@ $('register').onclick = async () => {
         method: 'POST',
         headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
                    CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
-        body: JSON.stringify({ name: p.n, day: d.label, device_id: deviceId() })
+        body: JSON.stringify({ name: p.n, day: lab, device_id: deviceId() })
       });
       if (!r.ok) {
         let t = ''; try { t = (await r.text()).slice(0, 200); } catch(x){}
         if (r.status === 409 && t.indexOf('attendance_device_day') >= 0) {
-          pending = false; btn.disabled = false; btn.textContent = 'Register attendance';
+          pending = false; btn.disabled = false; btn.textContent = idle;
           msg.textContent = 'This phone has already been used to register someone else today. If this is a mistake, please ask the registration desk.';
           return;
         }
@@ -339,13 +354,15 @@ $('register').onclick = async () => {
     }
     store.set('hk_me', p.n); if (p.guest) { store.set('hk_meo', JSON.stringify({ name: p.label, org: p.org })); $('otherName').disabled = true; $('otherOrg').disabled = true; } pending = false; $('who').disabled = true;
     $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + (p.label || p.n) + '. If this is wrong, please ask the registration desk.';
-    setReg(p.n, d.label); render(); showModal(p, d);
+    setReg(p.n, lab); render(); showModal(p, d, kind);
   } catch (e) {
-    pending = false; btn.disabled = false; btn.textContent = 'Register attendance';
+    pending = false; btn.disabled = false; btn.textContent = idle;
     msg.textContent = 'We could not record your attendance. Check your connection and try again, or ask the registration desk.';
     const small = document.createElement('div'); small.style.cssText = 'font-size:11px;opacity:.7;margin-top:6px;word-break:break-all'; small.textContent = 'Details: ' + (e && e.message ? e.message : e); msg.appendChild(small);
   }
-};
+}
+$('register').onclick = () => doRegister('am');
+$('registerPm').onclick = () => doRegister('pm');
 // ---- photo upload ----
 $('cPhotos').hidden = CONFIG.photoUploads === false;
 $('photoBtn').onclick = () => $('photoInput').click();
