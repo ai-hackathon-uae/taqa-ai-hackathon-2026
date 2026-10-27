@@ -48,6 +48,8 @@
   ol{margin:6px 0 0 20px;font-size:14px;line-height:1.6;color:#eaf8fd}
   .row{font-size:14px;line-height:1.7}
   .row b{color:var(--sky)}
+  .waMsg{font-size:14px;line-height:1.5;margin-top:12px}
+  .wa{display:block;margin-top:8px;padding:12px 14px;border-radius:12px;background:#25D366;color:#fff!important;font:800 14px Arial,sans-serif;text-align:center;text-decoration:none}
   .pw{font-family:Consolas,monospace;background:rgba(0,0,0,.25);padding:1px 6px;border-radius:6px}
 
   /* agenda */
@@ -120,6 +122,7 @@
         <div class="muted" id="pmNote">Please check out when you leave for the day.</div>
         <button class="btn off" id="registerPm" type="button" disabled>Check out</button>
         <div class="muted" id="pmMsg" role="status" style="margin-top:8px"></div>
+        <div id="pmWa"></div>
       </div>
     </div>
 
@@ -249,6 +252,7 @@ function render(){
   const pmTime = !pmFrom || !isToday || nowMin() >= mins(pmFrom);
   const pmOk = open && pmTime, pmDone = !!p && isReg(p.n, sessLabel(d,'pm'));
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
+  $('pmWa').innerHTML = pmDone ? waHtml(p, d) : '';
   pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
 
   // table
@@ -313,11 +317,19 @@ function isReg(n, dl){ try { return !!JSON.parse(store.get('hk_reg') || '{}')[re
 function setReg(n, dl){ let o = {}; try { o = JSON.parse(store.get('hk_reg') || '{}'); } catch(e){} o[regKey(n, dl)] = 1; store.set('hk_reg', JSON.stringify(o)); }
 const live = () => CONFIG.supabaseUrl && CONFIG.supabaseKey;
 
+function waHtml(p, d){
+  const days = Array.isArray(CONFIG.waDays) ? CONFIG.waDays : ['Day 2'];
+  if (!d || days.indexOf(d.label) < 0) return '';
+  const G = CONFIG.waGroups || {}, L = (p && p.teams || []).filter(t => /^https:\/\/chat\.whatsapp\.com\//.test(G[t] || ''));
+  if (!L.length) return '';
+  return '<div class="waMsg">' + (L.length > 1 ? 'Join your WhatsApp groups to stay connected with your teams and watch out for updates.' : 'Join your WhatsApp group to stay connected with your team and watch out for updates.') + '</div>'
+    + L.map(t => `<a class="wa" href="${esc(G[t])}" target="_blank" rel="noopener">Join ${esc(t)}</a>`).join('');
+}
 function showModal(p, d, kind){
   const t = p.t[day];
   $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
   $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
-  $('mTable').innerHTML = kind === 'pm' ? '' : d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
+  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d) : d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
