@@ -111,3 +111,4 @@ CONFIG.waGroups = {
 
 /* Days when the WhatsApp group message shows after check out. */
 CONFIG.waDays = ["Day 2"];
+CONFIG.waMorningDays = ["Day 3"];

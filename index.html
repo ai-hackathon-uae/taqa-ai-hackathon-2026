@@ -112,6 +112,7 @@
       <div class="muted" id="lockMsg" style="margin-top:8px" hidden></div>
       <button class="btn off" id="register" type="button" disabled>Register attendance</button>
       <div class="muted" id="regMsg" role="status" style="margin-top:8px"></div>
+      <div id="amWa"></div>
     </div>
 
     <div class="card" id="cTable">
@@ -255,7 +256,8 @@ function render(){
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
   $('pmCode').hidden = pmDone || !coCode(d); $('pmCode').disabled = !p || !pmOk;
   $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
-  $('pmWa').innerHTML = pmDone ? waHtml(p, d) : '';
+  $('pmWa').innerHTML = pmDone ? waHtml(p, d, 'pm') : '';
+  $('amWa').innerHTML = done ? waHtml(p, d, 'am') : '';
   pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
 
   // table
@@ -320,8 +322,8 @@ function isReg(n, dl){ try { return !!JSON.parse(store.get('hk_reg') || '{}')[re
 function setReg(n, dl){ let o = {}; try { o = JSON.parse(store.get('hk_reg') || '{}'); } catch(e){} o[regKey(n, dl)] = 1; store.set('hk_reg', JSON.stringify(o)); }
 const live = () => CONFIG.supabaseUrl && CONFIG.supabaseKey;
 
-function waHtml(p, d){
-  const days = Array.isArray(CONFIG.waDays) ? CONFIG.waDays : ['Day 2'];
+function waHtml(p, d, kind){
+  const days = kind === 'am' ? (Array.isArray(CONFIG.waMorningDays) ? CONFIG.waMorningDays : ['Day 3']) : (Array.isArray(CONFIG.waDays) ? CONFIG.waDays : ['Day 2']);
   if (!d || days.indexOf(d.label) < 0) return '';
   const G = CONFIG.waGroups || {}, L = (p && p.teams || []).filter(t => /^https:\/\/chat\.whatsapp\.com\//.test(G[t] || ''));
   if (!L.length) return '';
@@ -332,7 +334,7 @@ function showModal(p, d, kind){
   const t = p.t[day];
   $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
   $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
-  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d) : d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.';
+  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') : waHtml(p, d, 'am') + (d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.');
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
