@@ -11,7 +11,7 @@ const CONFIG = {
 
   /* Feedback survey. Paste the link when it is ready. Until then the box shows "coming soon". */
   surveyLink: "https://form.menti.com/s/alb7xpr2aj23",
-     openDays: ["Day 1", "Day 2"],
+     openDays: ["Day 1", "Day 2","Day 3"],
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],
