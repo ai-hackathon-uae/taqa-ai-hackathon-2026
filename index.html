@@ -120,6 +120,7 @@
       <div id="pmBox" style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)">
         <h2>Check out</h2>
         <div class="muted" id="pmNote">Please check out when you leave for the day.</div>
+        <input id="pmCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digit code from the screen" aria-label="4 digit check out code" style="width:100%;box-sizing:border-box;margin-top:10px;padding:12px;border-radius:10px;border:0;font-size:18px;text-align:center;letter-spacing:6px">
         <button class="btn off" id="registerPm" type="button" disabled>Check out</button>
         <div class="muted" id="pmMsg" role="status" style="margin-top:8px"></div>
         <div id="pmWa"></div>
@@ -252,8 +253,10 @@ function render(){
   const pmTime = !pmFrom || !isToday || nowMin() >= mins(pmFrom);
   const pmOk = open && pmTime, pmDone = !!p && isReg(p.n, sessLabel(d,'pm'));
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
+  $('pmCode').hidden = pmDone || !coCode(d); $('pmCode').disabled = !p || !pmOk;
+  $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
   $('pmWa').innerHTML = pmDone ? waHtml(p, d) : '';
-  pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
+  pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
 
   // table
   $('tblH').hidden = $('table').hidden = d.showTables === false;
@@ -336,11 +339,15 @@ function showModal(p, d, kind){
 $('mClose').onclick = () => { $('modal').hidden = true; };
 $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
 
+function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
+$('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
   const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : 'Morning attendance';
   if (!p || !isOpen(d)) return;
   if (isReg(p.n, lab)) { showModal(p, d, kind); return; }
-  if (pending !== kind && !store.get('hk_me')) {
+  if (kind === 'pm' && coCode(d)) {
+    if ($('pmCode').value.trim() !== coCode(d)) { msg.textContent = $('pmCode').value ? 'That code is not right. Please check the screen and try again.' : 'Please enter the 4 digit code shown on the screen.'; return; }
+  } else if (pending !== kind && !store.get('hk_me')) {
     pending = kind; render();
     msg.textContent = 'Please check this is your name. After you confirm, this phone cannot be used for anyone else.';
     return;
