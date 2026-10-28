@@ -341,7 +341,7 @@ function showModal(p, d, kind){
 $('mClose').onclick = () => { $('modal').hidden = true; };
 $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
 
-function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
+function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
   const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : 'Morning attendance';
