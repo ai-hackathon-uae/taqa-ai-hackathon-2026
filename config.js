@@ -89,24 +89,22 @@ const CONFIG = {
         {"title": "Day 3 Wrap & Feedback", "start": "16:30", "end": "17:00", "owner": "TAQA Innovation"},
       ]
     },
-    {
-      date: "2026-10-29", label: "Day 4", title: "Build Day 1: From Idea to Mock-up",
-      objective: "Define the solution and its requirements",
+       {
+      date: "2026-10-29", label: "Day 4", title: "Build Day 1: From Mock-up to Prototype",
+      objective: "Mock up the solution, then start the prototype",
       venue: "Beach Rotana, Saadiyat Island, Abu Dhabi",
-      note: "Media crew: a media crew will be on site to take pictures and short video snippets of each team. Introduce yourselves, tell us what you plan to build and why you want to build it.",
+      note: "Team photos and video: Teams go to the Majlis when Manasi calls them, for a team photo and a short team video (who you are, what you are building, what inspired it). It carries on after lunch.",
       sessions: [
-        {"title": "Registration & Check-in", "start": "08:30", "end": "09:00", "owner": "TAQA Innovation", "type": "checkin"},
-        {"title": "Welcome & Day Brief", "start": "09:00", "end": "09:15", "detail": "Agenda, expected output and how the day runs", "owner": "TAQA Innovation"},
-        {"title": "Final Pitch Format", "start": "09:15", "end": "09:30", "detail": "10 min to the Council plus 5 of Q&A; 60-70% of it is the demo", "owner": "TAQA Innovation"},
-        {"title": "Define & Commit (1): The Solution", "start": "09:30", "end": "10:30", "detail": "The user, what it does, the 4 to 6 step flow, what is out of scope", "owner": "TAQA Innovation"},
-        {"title": "Coffee Break", "start": "10:30", "end": "10:45", "type": "break"},
-        {"title": "Define & Commit (2): Requirements", "start": "10:45", "end": "11:30", "detail": "Data, systems, access and people: to demo it, and to run it for real", "owner": "TAQA Innovation + Microsoft"},
-        {"title": "Define & Commit (3): Stakeholders & Asks", "start": "11:30", "end": "12:00", "detail": "Three named people, the data owner among them, what you need, by when", "owner": "TAQA Innovation + Microsoft"},
+        {"title": "Registration & Check-in", "start": "09:00", "end": "09:30", "owner": "TAQA Innovation", "type": "checkin"},
+        {"title": "Welcome & Knowledge Check", "start": "09:30", "end": "09:45", "detail": "Welcome to our guests, quick quiz on Day 3", "owner": "TAQA Innovation"},
+        {"title": "The Art of the Possible", "start": "09:45", "end": "10:15", "detail": "What utilities around the world are doing with AI, and the use cases they are exploring", "owner": "Microsoft (Bilal Khursheed)"},
+        {"title": "Working Block", "start": "10:15", "end": "11:00", "detail": "Table sessions with Bilal (5 to 10 min per team), finish the solution pack and email it to Manasi, build a clickable mock-up, team photos and video at the Majlis", "owner": "Microsoft (Bilal Khursheed) + TAQA Innovation + 42 Abu Dhabi AI Engineering Fellows"},
+        {"title": "Coffee Break", "start": "11:00", "end": "11:15", "type": "break"},
+        {"title": "Working Block (continued)", "start": "11:15", "end": "12:00", "owner": "Microsoft (Bilal Khursheed) + TAQA Innovation + 42 Abu Dhabi AI Engineering Fellows"},
         {"title": "Lunch Break", "start": "12:00", "end": "13:00", "type": "break"},
-        {"title": "Build the Mock-up", "start": "13:00", "end": "15:00", "detail": "Clickable mock-up of the agreed flow, front end only", "owner": "TAQA Innovation, TAQA IT + Microsoft"},
-        {"title": "Coffee Break", "start": "15:00", "end": "15:15", "type": "break"},
-        {"title": "Share-out", "start": "15:15", "end": "16:30", "detail": "Gallery walk, teams present at stations over two rotations", "owner": "TAQA Innovation"},
-        {"title": "Wrap-up", "start": "16:30", "end": "17:00", "detail": "Next steps into the build month", "owner": "TAQA Innovation"},
+        {"title": "Mock-up to Prototype", "start": "13:00", "end": "15:30", "detail": "Finish the mock-up, then start building the prototype in the sandbox from the blocks marked BUILD", "owner": "Participants + 42 Abu Dhabi AI Engineering Fellows"},
+        {"title": "Share-outs", "start": "15:30", "end": "16:00", "detail": "A few teams show their mock-up and progress so far", "owner": "TAQA Innovation"},
+        {"title": "Close-out & Next Steps", "start": "16:00", "end": "16:15", "owner": "TAQA Innovation"},
       ]
     },
     {
