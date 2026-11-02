@@ -6,17 +6,19 @@ const CONFIG = {
 
   /* Attendance database (Supabase). Leave both empty to run in test mode:
      the page works, but check-ins are not saved. */
-  supabaseUrl: "https://fnolangvwpdbtxspemub.supabase.co",   // example: https://abcdxyz.supabase.co
-  supabaseKey: "sb_publishable_jVOIXjZDJH6Of4QtTw3yww_vBWFy9IC",   // the Publishable key (sb_publishable_...) or the legacy anon key
+  supabaseUrl: "",   // example: https://abcdxyz.supabase.co
+  supabaseKey: "",   // the Publishable key (sb_publishable_...) or the legacy anon key
 
   /* Feedback survey. Paste the link when it is ready. Until then the box shows "coming soon". */
-  surveyLink: "https://form.menti.com/s/alb7xpr2aj23",
-     openDays: ["Day 1", "Day 2","Day 3","Day 4"],
-   tbdDays: [],
+  surveyLink: "",
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],
   wifi: { network: "Rotana Hotels", password: "" },   // leave empty until you have them
+
+  /* Days where attendance can be marked. To open Day 2, change this to ["Day 1", "Day 2"]. */
+  openDays: ["Day 1"],
+  tbdDays: [],
 
   footnote: "Timings may shift to accommodate changes in the agenda.",
 
@@ -90,7 +92,7 @@ const CONFIG = {
         {"title": "Day 3 Wrap & Feedback", "start": "16:30", "end": "17:00", "owner": "TAQA Innovation"},
       ]
     },
-       {
+    {
       date: "2026-10-29", label: "Day 4", title: "Build Day 1: From Mock-up to Prototype",
       objective: "Mock up the solution, then start the prototype",
       venue: "Beach Rotana, Saadiyat Island, Abu Dhabi",
@@ -109,19 +111,19 @@ const CONFIG = {
       ]
     },
     {
-      date: "2026-11-05", label: "Day 5", title: "Build Day 2: Reimagine with AI",
-      objective: "Shape the idea with design thinking",
+      date: "2026-11-05", label: "Day 5", title: "Frontier Transformation",
+      objective: "Design your agent architecture for production deployment",
       venue: "Microsoft Innovation Hub, Dubai Internet City",
-      note: "Two batches: the idea team splits into two batches. Attendees are grouped by business function, not by hackathon team, and work on digital boards.",
+      note: "Two cohorts: the idea team splits into two cohorts on the same day, grouped by business function rather than by hackathon team. Both cohorts follow the same three-hour programme. This agenda is tentative and Microsoft may refine it before the day.",
       showTables: false,
-      batchLabels: ["Batch 1: 9:00 AM to 12:30 PM", "Batch 2: 1:30 PM to 5:00 PM"],
+      batchLabels: ["Cohort 1: 9:00 AM to 12:00 PM", "Cohort 2: 1:00 PM to 4:00 PM"],
       sessions: [
-        {"title": "Welcome & Introductions", "batches": [["09:00", "09:10"], ["13:30", "13:40"]], "detail": "Set the tone for the day and outline objectives", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "The Anatomy of an AI Agent", "batches": [["09:10", "09:50"], ["13:40", "14:20"]], "detail": "Key components, how agents interact with data, environments and users, orchestration and decisioning", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Break", "batches": [["09:50", "10:20"], ["14:20", "14:50"]], "type": "break"},
-        {"title": "Detailing Business Challenges for Agentification", "batches": [["10:20", "11:20"], ["14:50", "15:50"]], "detail": "Detail the high-friction processes in scope, agree the gaps and find the process breaking points", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Ideation: Designing Agents to Solve Business Challenges", "batches": [["11:20", "12:20"], ["15:50", "16:50"]], "detail": "Translate pain points into agent concepts; define agent characteristics and behaviours and design the Frontier Workflow", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Close & Next Steps", "batches": [["12:20", "12:30"], ["16:50", "17:00"]], "detail": "Recap key insights and solution directions", "owner": "Microsoft (Renju Kuriakose)"},
+        {"title": "Registration & Check-in", "batches": [["08:00", "09:00"], ["12:00", "13:00"]], "owner": "TAQA", "type": "checkin"},
+        {"title": "Becoming a Frontier Energy Company", "batches": [["09:00", "09:45"], ["13:00", "13:45"]], "detail": "Microsoft point of view and examples, first-party and third-party", "owner": "Microsoft (Renju Kuriakose)"},
+        {"title": "Design Agent Architecture", "batches": [["09:45", "10:45"], ["13:45", "14:45"]], "detail": "Prepare your AI hack scenario for production deployment", "owner": "Microsoft (Renju Kuriakose)"},
+        {"title": "Coffee Break", "batches": [["10:45", "11:00"], ["14:45", "15:00"]], "type": "break"},
+        {"title": "Hack Office Hours", "batches": [["11:00", "12:00"], ["15:00", "16:00"]], "detail": "Continue hacking with your team and get guidance from the Microsoft team", "owner": "Microsoft (Renju Kuriakose)"},
+        {"title": "Lunch, all cohorts", "batches": [["12:00", "13:00"], null], "type": "break"},
       ]
     },
   ],

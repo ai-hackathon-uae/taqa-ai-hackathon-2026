@@ -199,7 +199,7 @@ function pickDay(){
   const next = CONFIG.days.findIndex(d => d.date > t);
   return next >= 0 ? next : CONFIG.days.length-1;
 }
-let day = pickDay(), batch = nowMin() >= 12*60+30 ? 1 : 0;
+let day = pickDay(), batch = nowMin() >= 12*60 ? 1 : 0;
 
 const people = CONFIG.people;
 const groups = []; people.forEach(p => { const g = p.g || 'Participants'; if (groups.indexOf(g) < 0) groups.push(g); });
@@ -286,7 +286,7 @@ function render(){
   // timeline
   const nm = nowMin();
   if (tbd) $('tl').innerHTML = '<li class="s"><div class="tm">TBD</div><div><div class="tt">Agenda to be confirmed</div><div class="dd">We will share the agenda for this day soon.</div></div></li>';
-  else $('tl').innerHTML = d.sessions.map(s => {
+  else $('tl').innerHTML = d.sessions.filter(s => !hasB || s.batches[batch]).map(s => {
     const [a,b] = hasB ? s.batches[batch] : [s.start, s.end];
     const live = isToday && nm >= mins(a) && nm < mins(b);
     const past = isToday && nm >= mins(b);
