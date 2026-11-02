@@ -286,7 +286,7 @@ function render(){
   // timeline
   const nm = nowMin();
   if (tbd) $('tl').innerHTML = '<li class="s"><div class="tm">TBD</div><div><div class="tt">Agenda to be confirmed</div><div class="dd">We will share the agenda for this day soon.</div></div></li>';
-  else $('tl').innerHTML = d.sessions.filter(s => !hasB || s.batches[batch]).map(s => {
+  else $('tl').innerHTML = d.sessions.filter(s => !hasB || s.batches[batch]).slice().sort((x,y) => hasB ? mins(x.batches[batch][0]) - mins(y.batches[batch][0]) : 0).map(s => {
     const [a,b] = hasB ? s.batches[batch] : [s.start, s.end];
     const live = isToday && nm >= mins(a) && nm < mins(b);
     const past = isToday && nm >= mins(b);

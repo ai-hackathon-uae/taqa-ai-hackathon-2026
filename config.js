@@ -118,12 +118,12 @@ const CONFIG = {
       showTables: false,
       batchLabels: ["Cohort 1: 9:00 AM to 12:00 PM", "Cohort 2: 1:00 PM to 4:00 PM"],
       sessions: [
-        {"title": "Registration & Check-in", "batches": [["08:00", "09:00"], ["12:00", "13:00"]], "owner": "TAQA", "type": "checkin"},
-        {"title": "Becoming a Frontier Energy Company", "batches": [["09:00", "09:45"], ["13:00", "13:45"]], "detail": "Microsoft point of view and examples, first-party and third-party", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Design Agent Architecture", "batches": [["09:45", "10:45"], ["13:45", "14:45"]], "detail": "Prepare your AI hack scenario for production deployment", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Coffee Break", "batches": [["10:45", "11:00"], ["14:45", "15:00"]], "type": "break"},
-        {"title": "Hack Office Hours", "batches": [["11:00", "12:00"], ["15:00", "16:00"]], "detail": "Continue hacking with your team and get guidance from the Microsoft team", "owner": "Microsoft (Renju Kuriakose)"},
-        {"title": "Lunch, all cohorts", "batches": [["12:00", "13:00"], null], "type": "break"},
+        {"title": "Registration & check-in", "batches": [["08:00", "09:00"], ["12:00", "13:00"]], "detail": "Arrive, sign in and settle in.", "type": "checkin"},
+        {"title": "Becoming a Frontier Energy Company", "batches": [["09:00", "09:45"], ["13:00", "13:45"]], "detail": "Microsoft point of view and examples, including first-party and third-party examples.", "owner": "Microsoft team"},
+        {"title": "Design your agent architecture", "batches": [["09:45", "10:45"], ["13:45", "14:45"]], "detail": "Prepare your AI hack scenario for production deployment.", "owner": "Microsoft team"},
+        {"title": "Coffee break", "batches": [["10:45", "11:00"], ["14:45", "15:00"]], "detail": "Refreshments and networking.", "type": "break"},
+        {"title": "Hack office hours", "batches": [["11:00", "12:00"], ["15:00", "16:00"]], "detail": "Continue hacking with your team and get guidance from the Microsoft team.", "owner": "Microsoft team"},
+        {"title": "Lunch", "batches": [["12:00", "13:00"], ["12:00", "13:00"]], "detail": "Shared lunch for all cohorts. Cohort 2 registers during this window.", "type": "break"},
       ]
     },
   ],
