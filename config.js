@@ -10,7 +10,16 @@ const CONFIG = {
   supabaseKey: "sb_publishable_jVOIXjZDJH6Of4QtTw3yww_vBWFy9IC",   // the Publishable key (sb_publishable_...) or the legacy anon key
 
   /* Feedback survey. Paste the link when it is ready. Until then the box shows "coming soon". */
-  surveyLink: "",
+  surveyLink: "https://form.menti.com/s/al8rhewasbk1",
+
+  /* Check out opens at this time on the day. Leave empty to open it from the start of the day. */
+  afternoonFrom: "",
+
+  /* Days where people must complete the feedback survey before they can check out. */
+  surveyBeforeCheckout: ["Day 5"],
+
+  /* Check out code for each day, shown on the screen at the venue. */
+  checkoutCode: { "Day 2": "2710", "Day 3": "9416", "Day 4": "3343", "Day 5": "0511" },
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],
