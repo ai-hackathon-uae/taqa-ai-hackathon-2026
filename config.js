@@ -15,12 +15,8 @@ const CONFIG = {
   /* Check out opens at this time on the day. Leave empty to open it from the start of the day. */
   afternoonFrom: "",
 
-  /* Set to false to remove the check out feature from the page. */
+  /* Check out is switched off. Set to true to bring it back. */
   checkOutEnabled: false,
-
-
-  /* Check out code for each day, shown on the screen at the venue. */
-  checkoutCode: { "Day 2": "2710", "Day 3": "9416", "Day 4": "3343", "Day 5": "0511" },
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],

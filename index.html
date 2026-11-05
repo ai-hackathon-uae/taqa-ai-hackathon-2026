@@ -320,7 +320,7 @@ function render(){
 
   // details
   $('cInfo').hidden = d.showInfo === false;
-  const coOn = CONFIG.checkOutEnabled !== false;
+  const coOn = CONFIG.checkOutEnabled === true;
   $('pmBox').hidden = !coOn; $('cTable').hidden = !coOn && d.showTables === false;
   $('prayer').innerHTML = CONFIG.prayerRoom.map(s => `<li>${esc(s)}</li>`).join('');
   const w = CONFIG.wifi;
