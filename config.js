@@ -15,8 +15,9 @@ const CONFIG = {
   /* Check out opens at this time on the day. Leave empty to open it from the start of the day. */
   afternoonFrom: "",
 
-  /* Days where people must complete the feedback survey before they can check out. */
-  surveyBeforeCheckout: ["Day 5"],
+  /* Set to false to remove the check out feature from the page. */
+  checkOutEnabled: false,
+
 
   /* Check out code for each day, shown on the screen at the venue. */
   checkoutCode: { "Day 2": "2710", "Day 3": "9416", "Day 4": "3343", "Day 5": "0511" },
@@ -124,6 +125,7 @@ const CONFIG = {
       objective: "Design your agent architecture for production deployment",
       venue: "Microsoft Innovation Hub, Dubai Internet City",
       note: "Two cohorts: the idea team splits into two cohorts on the same day, grouped by business function rather than by hackathon team. Both cohorts follow the same three-hour programme. This agenda is tentative and Microsoft may refine it before the day.",
+      attendanceLabel: "Attendance",
       showTables: false,
       showInfo: false,
       batchLabels: ["Cohort 1: 9:00 AM to 12:00 PM", "Cohort 2: 1:00 PM to 4:00 PM"],

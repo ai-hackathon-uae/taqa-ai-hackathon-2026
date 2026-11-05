@@ -106,7 +106,7 @@
 
   <div class="grid">
     <div class="card" id="cReg">
-      <h2>Morning attendance</h2>
+      <h2 id="regH">Morning attendance</h2>
       <select id="who" aria-label="Your name"><option value="">Select your name</option></select>
       <div id="otherBox" hidden style="margin-top:10px;display:none;flex-direction:column;gap:8px"><input id="otherName" type="text" placeholder="Your full name" autocomplete="name" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"><input id="otherOrg" type="text" placeholder="Organisation (optional)" maxlength="80" style="width:100%;padding:13px 12px;border-radius:10px;border:0;font:16px Arial,sans-serif;color:var(--navy);background:#fff"></div>
       <div class="muted" id="lockMsg" style="margin-top:8px" hidden></div>
@@ -158,6 +158,12 @@
       <button class="btn" id="photoBtn" type="button">Add photos</button>
       <input id="photoInput" type="file" accept="image/*" multiple hidden>
       <div class="muted" id="photoMsg" role="status" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card" id="cSurvey">
+      <h2>Share your feedback</h2>
+      <div class="muted" id="svT"></div>
+      <a class="btn" id="survey" href="#" target="_blank" rel="noopener">Give feedback</a>
     </div>
 
   </div>
@@ -247,7 +253,8 @@ function render(){
   const open = isOpen(d);
   const done = !!p && isReg(p.n, sessLabel(d,'am'));
   reg.disabled = !p || !open; reg.classList.toggle('off', !p || !open); reg.classList.toggle('done', done);
-  reg.textContent = !open ? 'Attendance opens on the day' : done ? 'Morning attendance recorded' : pending === 'am' && p ? 'Confirm: I am ' + (p.label || p.n) : 'Morning attendance';
+  const AL = d.attendanceLabel || 'Morning attendance'; $('regH').textContent = AL;
+  reg.textContent = !open ? 'Attendance opens on the day' : done ? AL + ' recorded' : pending === 'am' && p ? 'Confirm: I am ' + (p.label || p.n) : AL;
   // afternoon
   const pm = $('registerPm'), pmFrom = CONFIG.afternoonFrom === undefined ? '12:30' : CONFIG.afternoonFrom;
   const pmTime = !pmFrom || !isToday || nowMin() >= mins(pmFrom);
@@ -258,7 +265,8 @@ function render(){
   $('pmSv').hidden = !svReq;
   if (svReq) {
     $('pmSvLink').href = CONFIG.surveyLink;
-    $('pmSvLink').classList.toggle('off', !p || !pmOk);
+    $('pmSvLink').classList.remove('off');
+    $('pmSvHint').textContent = !p ? 'First select your name in the box above. Then tap the button, answer the survey and come back to enter your code.' : !svSeen(d) ? 'Tap the button, answer the survey, then come back to this page to enter your code.' : 'Thank you. Now enter the code shown on the screen and check out.';
     if (!svSeen(d)) { $('pmCode').disabled = true; pm.disabled = true; pm.classList.add('off'); }
   }
   $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
@@ -312,10 +320,17 @@ function render(){
 
   // details
   $('cInfo').hidden = d.showInfo === false;
+  const coOn = CONFIG.checkOutEnabled !== false;
+  $('pmBox').hidden = !coOn; $('cTable').hidden = !coOn && d.showTables === false;
   $('prayer').innerHTML = CONFIG.prayerRoom.map(s => `<li>${esc(s)}</li>`).join('');
   const w = CONFIG.wifi;
   $('wifi').innerHTML = w.network ? `${esc(w.network)}${w.password ? ' &nbsp;Password: <span class="pw">' + esc(w.password) + '</span>' : ''}` : 'Details will be shared on the morning.';
   $('venue').textContent = d.venue;
+
+  // survey
+  const sv = $('survey');
+  if (CONFIG.surveyLink) { sv.href = CONFIG.surveyLink; sv.classList.remove('off'); sv.textContent = 'Give feedback'; $('svT').textContent = 'Two minutes, and it helps us a lot.'; }
+  else { sv.href = '#'; sv.classList.add('off'); sv.textContent = 'Survey link coming soon'; $('svT').textContent = 'The feedback survey will open here later in the day.'; }
 }
 
 // ---- attendance ----
@@ -350,10 +365,9 @@ $('pmSvLink').onclick = () => { store.set(svKey(CONFIG.days[day]), '1'); $('pmMs
 function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
-  const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : 'Morning attendance';
+  const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : (d.attendanceLabel || 'Morning attendance');
   if (!p || !isOpen(d)) return;
   if (isReg(p.n, lab)) { showModal(p, d, kind); return; }
-  if (kind === 'pm' && svRequired(d) && !svSeen(d)) { msg.textContent = 'Please open the feedback survey first, then come back to check out.'; return; }
   if (kind === 'pm' && coCode(d)) {
     if ($('pmCode').value.trim() !== coCode(d)) { msg.textContent = $('pmCode').value ? 'That code is not right. Please check the screen and try again.' : 'Please enter the 4 digit code shown on the screen.'; return; }
   } else if (pending !== kind && !store.get('hk_me')) {
