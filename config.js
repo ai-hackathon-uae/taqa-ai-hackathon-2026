@@ -17,7 +17,7 @@ const CONFIG = {
   wifi: { network: "Rotana Hotels", password: "" },   // leave empty until you have them
 
   /* Days where attendance can be marked. To open Day 2, change this to ["Day 1", "Day 2"]. */
-  openDays: ["Day 1, Day 5"],
+  openDays: ["Day 1", "Day 5"],
   tbdDays: [],
 
   footnote: "Timings may shift to accommodate changes in the agenda.",
