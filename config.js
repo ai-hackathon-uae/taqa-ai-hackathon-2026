@@ -6,8 +6,8 @@ const CONFIG = {
 
   /* Attendance database (Supabase). Leave both empty to run in test mode:
      the page works, but check-ins are not saved. */
-  supabaseUrl: "",   // example: https://abcdxyz.supabase.co
-  supabaseKey: "",   // the Publishable key (sb_publishable_...) or the legacy anon key
+  supabaseUrl: "https://fnolangvwpdbtxspemub.supabase.co",   // example: https://abcdxyz.supabase.co
+  supabaseKey: "sb_publishable_jVOIXjZDJH6Of4QtTw3yww_vBWFy9IC",   // the Publishable key (sb_publishable_...) or the legacy anon key
 
   /* Feedback survey. Paste the link when it is ready. Until then the box shows "coming soon". */
   surveyLink: "",
