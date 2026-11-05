@@ -125,6 +125,7 @@ const CONFIG = {
       venue: "Microsoft Innovation Hub, Dubai Internet City",
       note: "Two cohorts: the idea team splits into two cohorts on the same day, grouped by business function rather than by hackathon team. Both cohorts follow the same three-hour programme. This agenda is tentative and Microsoft may refine it before the day.",
       showTables: false,
+      showInfo: false,
       batchLabels: ["Cohort 1: 9:00 AM to 12:00 PM", "Cohort 2: 1:00 PM to 4:00 PM"],
       sessions: [
         {"title": "Registration & check-in", "batches": [["08:00", "09:00"], ["12:00", "13:00"]], "detail": "Arrive, sign in and settle in.", "type": "checkin"},

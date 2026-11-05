@@ -160,11 +160,6 @@
       <div class="muted" id="photoMsg" role="status" style="margin-top:8px"></div>
     </div>
 
-    <div class="card" id="cSurvey">
-      <h2>Share your feedback</h2>
-      <div class="muted" id="svT"></div>
-      <a class="btn" id="survey" href="#" target="_blank" rel="noopener">Give feedback</a>
-    </div>
   </div>
 </div>
 
@@ -260,7 +255,12 @@ function render(){
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
   $('pmCode').hidden = pmDone || !coCode(d); $('pmCode').disabled = !p || !pmOk;
   const svReq = svRequired(d) && !pmDone;
-  $('pmSv').hidden = !svReq; if (svReq) { $('pmSvLink').href = CONFIG.surveyLink; $('pmSvDone').disabled = !p || !pmOk || !svOpened; }
+  $('pmSv').hidden = !svReq;
+  if (svReq) {
+    $('pmSvLink').href = CONFIG.surveyLink; $('pmSvDone').disabled = !p || !pmOk || !svOpened;
+    const gate = !$('pmSvDone').checked;
+    if (gate) { $('pmCode').disabled = true; pm.disabled = true; pm.classList.add('off'); }
+  }
   $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
   $('pmWa').innerHTML = pmDone ? waHtml(p, d, 'pm') : '';
   $('amWa').innerHTML = done ? waHtml(p, d, 'am') : '';
@@ -311,15 +311,11 @@ function render(){
   $('foot').textContent = CONFIG.footnote || '';
 
   // details
+  $('cInfo').hidden = d.showInfo === false;
   $('prayer').innerHTML = CONFIG.prayerRoom.map(s => `<li>${esc(s)}</li>`).join('');
   const w = CONFIG.wifi;
   $('wifi').innerHTML = w.network ? `${esc(w.network)}${w.password ? ' &nbsp;Password: <span class="pw">' + esc(w.password) + '</span>' : ''}` : 'Details will be shared on the morning.';
   $('venue').textContent = d.venue;
-
-  // survey
-  const sv = $('survey');
-  if (CONFIG.surveyLink) { sv.href = CONFIG.surveyLink; sv.classList.remove('off'); sv.textContent = 'Give feedback'; $('svT').textContent = 'Two minutes, and it helps us a lot.'; }
-  else { sv.href = '#'; sv.classList.add('off'); sv.textContent = 'Survey link coming soon'; $('svT').textContent = 'The feedback survey will open here later in the day.'; }
 }
 
 // ---- attendance ----
@@ -349,8 +345,8 @@ $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = tru
 
 let svOpened = false;
 function svRequired(d){ return !!CONFIG.surveyLink && Array.isArray(CONFIG.surveyBeforeCheckout) && CONFIG.surveyBeforeCheckout.indexOf(d.label) >= 0; }
-$('pmSvLink').onclick = () => { svOpened = true; $('pmSvDone').disabled = false; $('pmMsg').textContent = ''; };
-$('pmSvDone').onchange = () => { $('pmMsg').textContent = ''; };
+$('pmSvLink').onclick = () => { svOpened = true; $('pmMsg').textContent = ''; render(); };
+$('pmSvDone').onchange = () => { $('pmMsg').textContent = ''; render(); };
 function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
