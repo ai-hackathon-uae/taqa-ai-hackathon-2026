@@ -13,17 +13,21 @@ const CONFIG = {
   surveyLink: "https://form.menti.com/s/al8rhewasbk1",
 
   /* Check out opens at this time on the day. Leave empty to open it from the start of the day. */
-  afternoonFrom: "",
+  afternoonFrom: "12:30",
 
   /* Check out is switched off. Set to true to bring it back. */
   checkOutEnabled: false,
+
+  /* The 4 digit check out code for each day with check out (Build Day 3 is Day 6). Change the code here, then upload this file again.
+     Check out is shown only on days that have checkOut: true below. */
+  checkoutCode: { "Day 6": "1211" },
 
   /* Helpful details */
   prayerRoom: ["Turn left from the meeting room lobby", "Walk down the corridor to the end", "Turn right"],
   wifi: { network: "Rotana Hotels", password: "" },   // leave empty until you have them
 
   /* Days where attendance can be marked. To open Day 2, change this to ["Day 1", "Day 2"]. */
-  openDays: ["Day 1", "Day 5"],
+  openDays: ["Day 1", "Day 5", "Day 6"],
   tbdDays: [],
 
   footnote: "Timings may shift to accommodate changes in the agenda.",
@@ -134,9 +138,29 @@ const CONFIG = {
         {"title": "Lunch", "batches": [["12:00", "13:00"], ["12:00", "13:00"]], "detail": "Shared lunch for all cohorts. Cohort 2 registers during this window.", "type": "break"},
       ]
     },
+    {
+      date: "2026-11-12", label: "Day 6", title: "Build Day 3: Prototype, Demo and Pitch",
+      objective: "Finalise the prototype, then build and practise the pitch",
+      venue: "Andaz Capital Gate, Abu Dhabi (Meeting room: Prive + Studio 3 and 4, Floor M)",
+      note: "What to bring: Your laptop and your prototype nearly complete. The room stays open until 5:00 PM for teams who want to keep building. Parking: Andaz staff will be at the main entrance to help guests.",
+      attendanceLabel: "Check in",
+      wifi: { network: "@World_of_Hyatt_Wifi", password: "" },
+      prayerRoom: [],
+      checkOut: true,
+      ownNotes: true,
+      sessions: [
+        {"title": "Registration & Check-in", "start": "08:30", "end": "09:30", "owner": "TAQA Innovation", "type": "checkin"},
+        {"title": "Prototype peer review", "start": "09:30", "end": "11:00", "detail": "Each team shares their current prototype", "owner": "Participants + TAQA Innovation"},
+        {"title": "Demo flow", "start": "11:00", "end": "12:00", "detail": "How to set up and run a strong live demo, then time to finalise your prototype", "owner": "TAQA Innovation"},
+        {"title": "Lunch Break", "start": "12:00", "end": "13:00", "type": "break"},
+        {"title": "Pitch and evaluation criteria", "start": "13:00", "end": "13:30", "detail": "A refresher on the pitch and how it will be evaluated", "owner": "TAQA Innovation"},
+        {"title": "Build and practise your pitch", "start": "13:30", "end": "16:00", "detail": "A few teams pitch to us for feedback", "owner": "Participants + TAQA Innovation"},
+        {"title": "Close-out & Check out", "start": "16:00", "end": "16:30", "owner": "TAQA Innovation"},
+      ]
+    },
   ],
 
-  /* Participants. t = table for Day 1, 2, 3, 4. Copy of the Seating sheet in the Excel. */
+  /* Participants. t = table for Day 1 to Day 6. Copy of the Seating sheet in the Excel. */
   people: [
     { n: "Abdulla Alhebsi", t: [7, 7, 7, 7] },
     { n: "Abdulla Hassan Al Blooshi", t: [7, 7, 7, 7] },

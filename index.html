@@ -215,6 +215,10 @@ const saved = store.get('hk_who');
 if (saved !== null && (people[saved] || saved === 'other')) $('who').value = saved;
 showOther();
 let pending = false;
+const isNM = (p, d) => !!p && Array.isArray(p.nm) && p.nm.indexOf(d.label) >= 0;
+const isNT = (p, d) => !!p && (p.notable || (Array.isArray(p.nt) && p.nt.indexOf(d.label) >= 0));
+const noteFor = (p, d) => !p ? '' : (p.notes && p.notes[d.label] !== undefined) ? p.notes[d.label] : (d.ownNotes ? '' : (p.note || ''));
+const hasCO = d => CONFIG.checkOutEnabled === true || d.checkOut === true;
 const sessLabel = (d, k) => k === 'pm' ? d.label + ' check out' : d.label;
 // Days where attendance can be marked. Add a day to openDays in config.js to unlock it.
 const openDays = Array.isArray(CONFIG.openDays) ? CONFIG.openDays : ['Day 1'];
@@ -257,7 +261,7 @@ function render(){
   reg.textContent = !open ? 'Attendance opens on the day' : done ? AL + ' recorded' : pending === 'am' && p ? 'Confirm: I am ' + (p.label || p.n) : AL;
   // afternoon
   const pm = $('registerPm'), pmFrom = CONFIG.afternoonFrom === undefined ? '12:30' : CONFIG.afternoonFrom;
-  const pmTime = !pmFrom || !isToday || nowMin() >= mins(pmFrom);
+  const pmTime = d.date < todayStr() || (isToday && (!pmFrom || nowMin() >= mins(pmFrom)));
   const pmOk = open && pmTime, pmDone = !!p && isReg(p.n, sessLabel(d,'pm'));
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
   $('pmCode').hidden = pmDone || !coCode(d); $('pmCode').disabled = !p || !pmOk;
@@ -269,21 +273,22 @@ function render(){
     $('pmSvHint').textContent = !p ? 'First select your name in the box above. Then tap the button, answer the survey and come back to enter your code.' : !svSeen(d) ? 'Tap the button, answer the survey, then come back to this page to enter your code.' : 'Thank you. Now enter the code shown on the screen and check out.';
     if (!svSeen(d)) { $('pmCode').disabled = true; pm.disabled = true; pm.classList.add('off'); }
   }
-  $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
+  $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Add your photos below if you like, then enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
   $('pmWa').innerHTML = pmDone ? waHtml(p, d, 'pm') : '';
   $('amWa').innerHTML = done ? waHtml(p, d, 'am') : '';
-  pm.textContent = !open ? 'Opens on the day' : !pmTime ? 'Opens at ' + pmFrom : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
+  pm.textContent = !open ? 'Opens on the day' : !pmTime ? (isToday ? 'Opens at ' + fmt(pmFrom) : 'Opens on the day' + (pmFrom ? ' at ' + fmt(pmFrom) : '')) : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
 
   // table
   $('tblH').hidden = $('table').hidden = d.showTables === false;
   if (!open) $('regMsg').textContent = 'Attendance for ' + d.label + ' opens on the morning of the day.';
-  const t = p && p.t[day];
+  const t = p && p.t && p.t[day];
   $('table').innerHTML = !p ? '<span class="muted">Select your name above to see your table.</span>'
     : !open ? '<span class="muted">Your table will appear here once attendance opens.</span>'
     : !done ? '<span class="muted">Register your attendance above to see your table.</span>'
-    : p.notable ? '<span class="muted">You do not have an assigned table. Please sit wherever is free.</span>'
-    : t ? `Please sit at table <b>${esc(t)}</b>${p.note ? '<div class="muted" style="margin-top:10px;white-space:pre-line">' + esc(p.note) + '</div>' : ''}`
-    : p.note ? `<span class="muted" style="white-space:pre-line">${esc(p.note)}</span>`
+    : isNM(p, d) ? '<span class="muted">You are checked in.</span>'
+    : isNT(p, d) ? '<span class="muted">You do not have an assigned table. Please sit wherever is free.</span>'
+    : t ? `Please sit at table <b>${esc(t)}</b>${noteFor(p, d) ? '<div class="muted" style="margin-top:10px;white-space:pre-line">' + esc(noteFor(p, d)) + '</div>' : ''}`
+    : noteFor(p, d) ? `<span class="muted" style="white-space:pre-line">${esc(noteFor(p, d))}</span>`
     : '<span class="muted">Your table for this day will be shared on the morning.</span>';
 
   // agenda header
@@ -320,10 +325,13 @@ function render(){
 
   // details
   $('cInfo').hidden = d.showInfo === false;
-  const coOn = CONFIG.checkOutEnabled === true;
+  const coOn = hasCO(d);
   $('pmBox').hidden = !coOn; $('cTable').hidden = !coOn && d.showTables === false;
-  $('prayer').innerHTML = CONFIG.prayerRoom.map(s => `<li>${esc(s)}</li>`).join('');
-  const w = CONFIG.wifi;
+  if (coOn) $('cTable').after($('cPhotos')); else $('cInfo').after($('cPhotos'));
+  const pr = Array.isArray(d.prayerRoom) ? d.prayerRoom : CONFIG.prayerRoom;
+  $('prayer').parentNode.hidden = !pr.length;
+  $('prayer').innerHTML = pr.map(s => `<li>${esc(s)}</li>`).join('');
+  const w = d.wifi || CONFIG.wifi;
   $('wifi').innerHTML = w.network ? `${esc(w.network)}${w.password ? ' &nbsp;Password: <span class="pw">' + esc(w.password) + '</span>' : ''}` : 'Details will be shared on the morning.';
   $('venue').textContent = d.venue;
 
@@ -348,10 +356,10 @@ function waHtml(p, d, kind){
     + L.map(t => `<a class="wa" href="${esc(G[t])}" target="_blank" rel="noopener">Join ${esc(t)}</a>`).join('');
 }
 function showModal(p, d, kind){
-  const t = p.t[day];
+  const t = p.t && p.t[day];
   $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
   $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
-  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') : waHtml(p, d, 'am') + (d.showTables === false ? '' : p.notable ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (p.note ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(p.note) + '</span>' : '') : p.note ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(p.note) + '</span>' : 'Your table will be shared on the morning.');
+  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') : waHtml(p, d, 'am') + (d.showTables === false || isNM(p, d) ? '' : isNT(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (noteFor(p, d) ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(noteFor(p, d)) + '</span>' : '') : noteFor(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(noteFor(p, d)) + '</span>' : 'Your table will be shared on the morning.');
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
@@ -362,7 +370,7 @@ const svKey = d => 'hk_sv_' + d.label;
 const svSeen = d => store.get(svKey(d)) === '1';
 function svRequired(d){ return !!CONFIG.surveyLink && Array.isArray(CONFIG.surveyBeforeCheckout) && CONFIG.surveyBeforeCheckout.indexOf(d.label) >= 0; }
 $('pmSvLink').onclick = () => { store.set(svKey(CONFIG.days[day]), '1'); $('pmMsg').textContent = ''; setTimeout(render, 50); };
-function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
+function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343', 'Day 6': '1211' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
   const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : (d.attendanceLabel || 'Morning attendance');
