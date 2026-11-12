@@ -42,6 +42,10 @@
   .mbox .big b{display:block;font-size:46px;color:var(--navy);line-height:1.1}
   .mbox .demo{font-size:12px;color:#a35a00;margin-top:10px}
   .mbox button{margin-top:18px;width:100%;border:0;border-radius:12px;padding:13px;background:var(--cyan);color:#fff;font:800 16px Arial,sans-serif;cursor:pointer}
+  .pkm{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .mbox .pkm button{flex:1 1 70px;margin-top:0;padding:12px 8px;background:#fff;color:var(--navy);border:2px solid #c9ccd8;font:700 15px Arial,sans-serif}
+  .mbox .pkm button.on{background:var(--sky);border-color:var(--navy)}
+  .mbox #mPkBtn:disabled{background:#b9bfcc;cursor:default}
   .table{font-size:15px;line-height:1.4}
   .table b{display:inline-block;background:#fff;color:var(--navy);border-radius:10px;padding:2px 12px;font-size:22px;margin-left:4px}
   .muted{font-size:14px;color:var(--ink);line-height:1.5}
@@ -123,11 +127,6 @@
       <div id="pmBox" style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)">
         <h2>Check out</h2>
         <div class="muted" id="pmNote">Please check out when you leave for the day.</div>
-        <div id="pkBox" hidden style="margin-top:12px">
-          <div style="font-weight:700">Where did you park?</div>
-          <div id="pkOpts" class="pk" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
-          <div id="pkMsg" style="margin-top:8px;font-weight:700"></div>
-        </div>
         <div id="pmSv" hidden style="margin-top:10px">
           <a class="btn" id="pmSvLink" href="#" target="_blank" rel="noopener">Step 1: Open the feedback survey</a>
           <div class="muted" id="pmSvHint" style="margin-top:6px">Tap the button, answer the survey, then come back to this page to enter your code.</div>
@@ -182,6 +181,12 @@
     <h3 id="mTitle"></h3>
     <p id="mSub"></p>
     <div class="big" id="mTable"></div>
+    <div id="mPk" hidden>
+      <div style="font-weight:700;margin-top:16px;font-size:16px">Where did you park?</div>
+      <div id="mPkOpts" class="pkm"></div>
+      <button type="button" id="mPkBtn" disabled>Confirm</button>
+    </div>
+    <div id="mPkMsg" style="font-weight:700;margin-top:12px;font-size:15px"></div>
     <div class="demo" id="mDemo" hidden>Test mode: this check-in was not saved.</div>
     <button type="button" id="mClose">Done</button>
   </div>
@@ -225,6 +230,8 @@ let pending = false;
 const PK = ['A', 'B', 'Valet', 'Other'];
 const pkKey = d => 'hk_pk_' + d.label;
 const pkGet = d => store.get(pkKey(d)) || '';
+const pkDone = d => store.get('hk_pkc_' + d.label) === '1';
+let pkSel = '';
 const PK_A = 'Please let us know. Find Manasi or Mohsin.';
 const svLink = d => (d && d.surveyLink) || CONFIG.surveyLink;
 const isNM = (p, d) => !!p && Array.isArray(p.nm) && p.nm.indexOf(d.label) >= 0;
@@ -286,10 +293,6 @@ function render(){
     if (!svSeen(d)) { $('pmCode').disabled = true; pm.disabled = true; pm.classList.add('off'); }
   }
   $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Add your photos below if you like, then enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
-  const pkOn = d.parking === true && hasCO(d) && !pmDone, pk = pkGet(d);
-  $('pkBox').hidden = !pkOn;
-  $('pkOpts').innerHTML = PK.map(o => `<button type="button" data-v="${o}" class="${o === pk ? 'on' : ''}">${o}</button>`).join('');
-  $('pkMsg').textContent = pk === 'A' ? PK_A : '';
   $('pmWa').innerHTML = pmDone ? waHtml(p, d, 'pm') : '';
   $('amWa').innerHTML = done ? waHtml(p, d, 'am') : '';
   pm.textContent = !open ? 'Opens on the day' : !pmTime ? (isToday ? 'Opens at ' + fmt(pmFrom) : 'Opens on the day' + (pmFrom ? ' at ' + fmt(pmFrom) : '')) : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
@@ -375,25 +378,41 @@ function showModal(p, d, kind){
   const t = p.t && p.t[day];
   $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
   $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
-  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') + (d.parking && pkGet(d) === 'A' ? '<span style="display:block;font-size:14px;margin-top:10px;color:#16162e;font-weight:700">' + esc(PK_A) + '</span>' : '') : waHtml(p, d, 'am') + (d.showTables === false || isNM(p, d) ? '' : isNT(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (noteFor(p, d) ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(noteFor(p, d)) + '</span>' : '') : noteFor(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(noteFor(p, d)) + '</span>' : 'Your table will be shared on the morning.');
+  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') : waHtml(p, d, 'am') + (d.showTables === false || isNM(p, d) ? '' : isNT(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (noteFor(p, d) ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(noteFor(p, d)) + '</span>' : '') : noteFor(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(noteFor(p, d)) + '</span>' : 'Your table will be shared on the morning.');
   $('mDemo').hidden = !!live();
-  $('modal').hidden = false; $('mClose').focus();
+  const needPk = kind === 'pm' && d.parking === true && !pkDone(d);
+  pkSel = ''; $('mPk').hidden = !needPk; $('mClose').hidden = needPk; $('mPkBtn').disabled = true;
+  $('mPkOpts').innerHTML = PK.map(o => `<button type="button" data-v="${o}">${o}</button>`).join('');
+  $('mPkMsg').textContent = kind === 'pm' && d.parking === true && pkGet(d) === 'A' ? PK_A : '';
+  $('modal').hidden = false; if (!needPk) $('mClose').focus();
 }
 $('mClose').onclick = () => { $('modal').hidden = true; };
-$('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = true; };
+$('modal').onclick = e => { if (e.target.id === 'modal' && $('mPk').hidden) $('modal').hidden = true; };
+$('mPkOpts').onclick = e => { const v = e.target.dataset.v; if (!v) return; pkSel = v; $('mPkBtn').disabled = false; document.querySelectorAll('#mPkOpts button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); };
+$('mPkBtn').onclick = async () => {
+  const p = cur(), d = CONFIG.days[day]; if (!pkSel || !p) return;
+  $('mPkBtn').disabled = true; $('mPkBtn').textContent = 'Saving...';
+  if (live()) {
+    try { await fetch(CONFIG.supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '') + '/rest/v1/parking', { method: 'POST',
+      headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
+      body: JSON.stringify({ name: p.n, day: d.label, spot: pkSel, device_id: deviceId() }) }); } catch (x) {}
+  }
+  store.set(pkKey(d), pkSel); store.set('hk_pkc_' + d.label, '1');
+  $('mPkBtn').textContent = 'Confirm'; $('mPk').hidden = true; $('mClose').hidden = false;
+  $('mPkMsg').textContent = pkSel === 'A' ? PK_A : 'Thank you.';
+  $('mClose').focus();
+};
 
 const svKey = d => 'hk_sv_' + d.label;
 const svSeen = d => store.get(svKey(d)) === '1';
 function svRequired(d){ return !!svLink(d) && Array.isArray(CONFIG.surveyBeforeCheckout) && CONFIG.surveyBeforeCheckout.indexOf(d.label) >= 0; }
 $('pmSvLink').onclick = () => { store.set(svKey(CONFIG.days[day]), '1'); $('pmMsg').textContent = ''; setTimeout(render, 50); };
 function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343', 'Day 6': '1211' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
-$('pkOpts').onclick = e => { const v = e.target.dataset.v; if (v) { store.set(pkKey(CONFIG.days[day]), v); $('pmMsg').textContent = ''; render(); } };
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
   const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : (d.attendanceLabel || 'Morning attendance');
   if (!p || !isOpen(d)) return;
   if (isReg(p.n, lab)) { showModal(p, d, kind); return; }
-  if (kind === 'pm' && d.parking === true && !pkGet(d)) { msg.textContent = 'Please choose where you parked.'; return; }
   if (kind === 'pm' && coCode(d)) {
     if ($('pmCode').value.trim() !== coCode(d)) { msg.textContent = $('pmCode').value ? 'That code is not right. Please check the screen and try again.' : 'Please enter the 4 digit code shown on the screen.'; return; }
   } else if (pending !== kind && !store.get('hk_me')) {
@@ -419,11 +438,6 @@ async function doRegister(kind){
         }
         if (r.status !== 409) throw new Error('HTTP ' + r.status + (t ? ' ' + t : ''));
       }
-    }
-    if (kind === 'pm' && d.parking === true && live() && pkGet(d)) {
-      try { await fetch(CONFIG.supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '') + '/rest/v1/parking', { method: 'POST',
-        headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
-        body: JSON.stringify({ name: p.n, day: d.label, spot: pkGet(d), device_id: deviceId() }) }); } catch (x) {}
     }
     store.set('hk_me', p.n); if (p.guest) { store.set('hk_meo', JSON.stringify({ name: p.label, org: p.org })); $('otherName').disabled = true; $('otherOrg').disabled = true; } pending = false; $('who').disabled = true;
     $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + (p.label || p.n) + '. If this is wrong, please ask the registration desk.';
