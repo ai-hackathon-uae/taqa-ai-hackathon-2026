@@ -146,6 +146,8 @@ const CONFIG = {
       attendanceLabel: "Check in",
       wifi: { network: "@World_of_Hyatt_Wifi", password: "" },
       prayerRoom: [],
+      surveyLink: "https://form.menti.com/s/alk1nnhbxs39",
+      parking: true,
       checkOut: true,
       ownNotes: true,
       sessions: [
