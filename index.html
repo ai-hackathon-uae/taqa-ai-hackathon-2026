@@ -60,6 +60,8 @@
   .ag-meta{font-size:13px;color:var(--ink);margin-top:2px}
   .batches{display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap}
   .batches button{flex:1 1 140px;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--ink);font:700 12px Arial,sans-serif;cursor:pointer}
+  .pk button{flex:1 1 70px;padding:11px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:transparent;color:var(--ink);font:700 14px Arial,sans-serif;cursor:pointer}
+  .pk button.on{background:var(--sky);color:var(--navy);border-color:var(--sky)}
   .batches button.on{background:var(--sky);color:var(--navy);border-color:var(--sky)}
   .tl{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
   .s{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid transparent}
@@ -121,6 +123,11 @@
       <div id="pmBox" style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)">
         <h2>Check out</h2>
         <div class="muted" id="pmNote">Please check out when you leave for the day.</div>
+        <div id="pkBox" hidden style="margin-top:12px">
+          <div style="font-weight:700">Where did you park?</div>
+          <div id="pkOpts" class="pk" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+          <div id="pkMsg" style="margin-top:8px;font-weight:700"></div>
+        </div>
         <div id="pmSv" hidden style="margin-top:10px">
           <a class="btn" id="pmSvLink" href="#" target="_blank" rel="noopener">Step 1: Open the feedback survey</a>
           <div class="muted" id="pmSvHint" style="margin-top:6px">Tap the button, answer the survey, then come back to this page to enter your code.</div>
@@ -215,6 +222,11 @@ const saved = store.get('hk_who');
 if (saved !== null && (people[saved] || saved === 'other')) $('who').value = saved;
 showOther();
 let pending = false;
+const PK = ['A', 'B', 'Valet', 'Other'];
+const pkKey = d => 'hk_pk_' + d.label;
+const pkGet = d => store.get(pkKey(d)) || '';
+const PK_A = 'Please let us know. Find Manasi or Mohsin.';
+const svLink = d => (d && d.surveyLink) || CONFIG.surveyLink;
 const isNM = (p, d) => !!p && Array.isArray(p.nm) && p.nm.indexOf(d.label) >= 0;
 const isNT = (p, d) => !!p && (p.notable || (Array.isArray(p.nt) && p.nt.indexOf(d.label) >= 0));
 const noteFor = (p, d) => !p ? '' : (p.notes && p.notes[d.label] !== undefined) ? p.notes[d.label] : (d.ownNotes ? '' : (p.note || ''));
@@ -268,12 +280,16 @@ function render(){
   const svReq = svRequired(d) && !pmDone;
   $('pmSv').hidden = !svReq;
   if (svReq) {
-    $('pmSvLink').href = CONFIG.surveyLink;
+    $('pmSvLink').href = svLink(d);
     $('pmSvLink').classList.remove('off');
     $('pmSvHint').textContent = !p ? 'First select your name in the box above. Then tap the button, answer the survey and come back to enter your code.' : !svSeen(d) ? 'Tap the button, answer the survey, then come back to this page to enter your code.' : 'Thank you. Now enter the code shown on the screen and check out.';
     if (!svSeen(d)) { $('pmCode').disabled = true; pm.disabled = true; pm.classList.add('off'); }
   }
   $('pmNote').textContent = coCode(d) && !pmDone ? 'Please check out when you leave for the day. Add your photos below if you like, then enter the 4 digit code shown on the screen.' : 'Please check out when you leave for the day.';
+  const pkOn = d.parking === true && hasCO(d) && !pmDone, pk = pkGet(d);
+  $('pkBox').hidden = !pkOn;
+  $('pkOpts').innerHTML = PK.map(o => `<button type="button" data-v="${o}" class="${o === pk ? 'on' : ''}">${o}</button>`).join('');
+  $('pkMsg').textContent = pk === 'A' ? PK_A : '';
   $('pmWa').innerHTML = pmDone ? waHtml(p, d, 'pm') : '';
   $('amWa').innerHTML = done ? waHtml(p, d, 'am') : '';
   pm.textContent = !open ? 'Opens on the day' : !pmTime ? (isToday ? 'Opens at ' + fmt(pmFrom) : 'Opens on the day' + (pmFrom ? ' at ' + fmt(pmFrom) : '')) : pmDone ? 'Checked out' : pending === 'pm' && p && !coCode(d) ? 'Confirm: I am ' + (p.label || p.n) : 'Check out';
@@ -310,7 +326,7 @@ function render(){
     const live = isToday && nm >= mins(a) && nm < mins(b);
     const past = isToday && nm >= mins(b);
     const cls = ['s', s.type || '', live ? 'now' : '', past ? 'past' : ''].join(' ');
-    const fb = /feedback/i.test(s.title) && CONFIG.surveyLink ? `<br><a class="fb" href="${esc(CONFIG.surveyLink)}" target="_blank" rel="noopener">Give feedback</a>` : '';
+    const fb = /feedback/i.test(s.title) && svLink(d) ? `<br><a class="fb" href="${esc(svLink(d))}" target="_blank" rel="noopener">Give feedback</a>` : '';
     return `<li class="${cls}"><div class="tm">${fmt(a)}<span>to ${fmt(b)}</span></div><div>
       <div class="tt">${esc(s.title)}${live ? '<span class="tag">NOW</span>' : ''}</div>
       ${s.detail ? `<div class="dd">${esc(s.detail)}</div>` : ''}
@@ -337,7 +353,7 @@ function render(){
 
   // survey
   const sv = $('survey');
-  if (CONFIG.surveyLink) { sv.href = CONFIG.surveyLink; sv.classList.remove('off'); sv.textContent = 'Give feedback'; $('svT').textContent = 'Two minutes, and it helps us a lot.'; }
+  if (svLink(d)) { sv.href = svLink(d); sv.classList.remove('off'); sv.textContent = 'Give feedback'; $('svT').textContent = 'Two minutes, and it helps us a lot.'; }
   else { sv.href = '#'; sv.classList.add('off'); sv.textContent = 'Survey link coming soon'; $('svT').textContent = 'The feedback survey will open here later in the day.'; }
 }
 
@@ -359,7 +375,7 @@ function showModal(p, d, kind){
   const t = p.t && p.t[day];
   $('mTitle').textContent = kind === 'pm' ? 'You have been checked out' : 'You have been marked present';
   $('mSub').textContent = (p.label || p.n) + ', ' + d.label + (kind === 'pm' ? ' check out' : ' morning');
-  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') : waHtml(p, d, 'am') + (d.showTables === false || isNM(p, d) ? '' : isNT(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (noteFor(p, d) ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(noteFor(p, d)) + '</span>' : '') : noteFor(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(noteFor(p, d)) + '</span>' : 'Your table will be shared on the morning.');
+  $('mTable').innerHTML = kind === 'pm' ? waHtml(p, d, 'pm') + (d.parking && pkGet(d) === 'A' ? '<span style="display:block;font-size:14px;margin-top:10px;color:#16162e;font-weight:700">' + esc(PK_A) + '</span>' : '') : waHtml(p, d, 'am') + (d.showTables === false || isNM(p, d) ? '' : isNT(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;color:#16162e">You do not have an assigned table. Please sit wherever is free.</span>' : t ? 'Your table<b>' + esc(t) + '</b>' + (noteFor(p, d) ? '<span style="display:block;font-size:13px;margin-top:8px;white-space:pre-line;text-align:left">' + esc(noteFor(p, d)) + '</span>' : '') : noteFor(p, d) ? '<span style="display:block;font-size:14px;margin-top:4px;white-space:pre-line;text-align:left;color:#16162e">' + esc(noteFor(p, d)) + '</span>' : 'Your table will be shared on the morning.');
   $('mDemo').hidden = !!live();
   $('modal').hidden = false; $('mClose').focus();
 }
@@ -368,14 +384,16 @@ $('modal').onclick = e => { if (e.target.id === 'modal') $('modal').hidden = tru
 
 const svKey = d => 'hk_sv_' + d.label;
 const svSeen = d => store.get(svKey(d)) === '1';
-function svRequired(d){ return !!CONFIG.surveyLink && Array.isArray(CONFIG.surveyBeforeCheckout) && CONFIG.surveyBeforeCheckout.indexOf(d.label) >= 0; }
+function svRequired(d){ return !!svLink(d) && Array.isArray(CONFIG.surveyBeforeCheckout) && CONFIG.surveyBeforeCheckout.indexOf(d.label) >= 0; }
 $('pmSvLink').onclick = () => { store.set(svKey(CONFIG.days[day]), '1'); $('pmMsg').textContent = ''; setTimeout(render, 50); };
 function coCode(d){ const c = CONFIG.checkoutCode === undefined ? { 'Day 2': '2710', 'Day 3': '9416', 'Day 4': '3343', 'Day 6': '1211' } : CONFIG.checkoutCode; return String(c && typeof c === 'object' ? (c[d.label] || c[Object.keys(c).find(k => k === d.label)] || '') : c || '').trim(); }
+$('pkOpts').onclick = e => { const v = e.target.dataset.v; if (v) { store.set(pkKey(CONFIG.days[day]), v); $('pmMsg').textContent = ''; render(); } };
 $('pmCode').oninput = () => { $('pmCode').value = $('pmCode').value.replace(/\D/g, '').slice(0, 4); $('pmMsg').textContent = ''; };
 async function doRegister(kind){
   const p = cur(), d = CONFIG.days[day], msg = $(kind === 'pm' ? 'pmMsg' : 'regMsg'), btn = $(kind === 'pm' ? 'registerPm' : 'register'), lab = sessLabel(d, kind), idle = kind === 'pm' ? 'Check out' : (d.attendanceLabel || 'Morning attendance');
   if (!p || !isOpen(d)) return;
   if (isReg(p.n, lab)) { showModal(p, d, kind); return; }
+  if (kind === 'pm' && d.parking === true && !pkGet(d)) { msg.textContent = 'Please choose where you parked.'; return; }
   if (kind === 'pm' && coCode(d)) {
     if ($('pmCode').value.trim() !== coCode(d)) { msg.textContent = $('pmCode').value ? 'That code is not right. Please check the screen and try again.' : 'Please enter the 4 digit code shown on the screen.'; return; }
   } else if (pending !== kind && !store.get('hk_me')) {
@@ -401,6 +419,11 @@ async function doRegister(kind){
         }
         if (r.status !== 409) throw new Error('HTTP ' + r.status + (t ? ' ' + t : ''));
       }
+    }
+    if (kind === 'pm' && d.parking === true && live() && pkGet(d)) {
+      try { await fetch(CONFIG.supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '') + '/rest/v1/parking', { method: 'POST',
+        headers: Object.assign({ apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, CONFIG.supabaseKey.startsWith('eyJ') ? { Authorization: 'Bearer ' + CONFIG.supabaseKey } : {}),
+        body: JSON.stringify({ name: p.n, day: d.label, spot: pkGet(d), device_id: deviceId() }) }); } catch (x) {}
     }
     store.set('hk_me', p.n); if (p.guest) { store.set('hk_meo', JSON.stringify({ name: p.label, org: p.org })); $('otherName').disabled = true; $('otherOrg').disabled = true; } pending = false; $('who').disabled = true;
     $('lockMsg').hidden = false; $('lockMsg').textContent = 'This phone is registered to ' + (p.label || p.n) + '. If this is wrong, please ask the registration desk.';
