@@ -72,8 +72,8 @@ CONFIG.people = [
 { n: "Mohammad Maaz Khan", t: ["","","","","",2], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 2: Automated M&V\nTable 4: Smart Connect AI\nTable 9: Asset Data Reconciliation", notes: {"Day 6":"Your matched teams:\nTable 2: Smart Connect AI\nTable 7: OneAsset\nTable 9: Daleel"}, teams: ["Automated M&V","Smart Connect AI","Asset Data Reconciliation"] },
 { n: "Mohammad Yousaf", t: ["","","","","",5], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 6: AI Emergency Restoration Adviser\nTable 12: Smart Isolation Adviser\nTable 14: Gas Turbine Trip Early Warning", notes: {"Day 6":"Your matched teams:\nTable 5: Power On Pulse\nTable 6: Smart Isolation Adviser\nTable 8: Gas Turbine Trip Early Warning"}, teams: ["AI Emergency Restoration Adviser","Smart Isolation Adviser","Gas Turbine Trip Early Warning"] },
 { n: "Tanvir Ahmed", t: ["","","","","",3], g: "42 Abu Dhabi fellows", note: "Your matched teams:\nTable 11: Safety and Fault Copilot\nTable 13: Snap2Sign\nTable 15: Water Submission Assurance Gateway", notes: {"Day 6":"Your matched teams:\nTable 3: Hey TAQA\nTable 3: Snap2Sign\nTable 6: WISE"}, teams: ["Safety and Fault Copilot","Snap2Sign","Water Submission Assurance Gateway"] },
-{ n: "Manasi Sarin", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], notable: true },
-{ n: "Mohsin Bin Latheef", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], notable: true },
+{ n: "Manasi Sarin", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], eco: ["Day 6"], notable: true },
+{ n: "Mohsin Bin Latheef", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], eco: ["Day 6"], notable: true },
 { n: "Neil Ford", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], notable: true },
 { n: "Enrique Ortega", t: ["","","","","",""], g: "GELLIFY", nm: ["Day 6"], notable: true },
 { n: "Qais Alsuwaidi", t: ["","","","","",""], g: "TAQA Innovation", nm: ["Day 6"], notable: true }

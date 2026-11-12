@@ -273,7 +273,7 @@ function render(){
   reg.textContent = !open ? 'Attendance opens on the day' : done ? AL + ' recorded' : pending === 'am' && p ? 'Confirm: I am ' + (p.label || p.n) : AL;
   // afternoon
   const pm = $('registerPm'), pmFrom = CONFIG.afternoonFrom === undefined ? '12:30' : CONFIG.afternoonFrom;
-  const pmTime = d.date < todayStr() || (isToday && (!pmFrom || nowMin() >= mins(pmFrom)));
+  const pmTime = (!!p && Array.isArray(p.eco) && p.eco.indexOf(d.label) >= 0) || d.date < todayStr() || (isToday && (!pmFrom || nowMin() >= mins(pmFrom)));
   const pmOk = open && pmTime, pmDone = !!p && isReg(p.n, sessLabel(d,'pm'));
   pm.disabled = !p || !pmOk; pm.classList.toggle('off', !p || !pmOk); pm.classList.toggle('done', pmDone);
   $('pmCode').hidden = pmDone || !coCode(d); $('pmCode').disabled = !p || !pmOk;
